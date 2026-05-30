@@ -268,7 +268,7 @@ Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 
 ## 👤 About the Author
 
-**Ahmad Shah** is a self-taught software engineer with 10+ years of experience building production systems across frontend, backend, and infrastructure. TenantKit was built to solve a real problem: every SaaS project starts with the same 3 months of boilerplate. This is the boilerplate I wish I had when I started.
+**Ahmad Shah** is a software engineer with 10+ years of experience building production systems across frontend, backend, and infrastructure. TenantKit was built to solve a real problem: every SaaS project starts with the same 3 months of boilerplate. This is the boilerplate I wish I had when I started.
 
 > *"I built TenantKit because I was tired of rebuilding auth, billing, and tenancy for every client project. Now I spin up a new SaaS in hours, not weeks. I hope it saves you the same time."* — **Ahmad Shah**
 

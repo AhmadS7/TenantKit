@@ -1,47 +1,34 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
-
-export enum TenantPlan {
-  FREE = 'free',
-  PRO = 'pro',
-  ENTERPRISE = 'enterprise',
-}
-
-export enum TenantRegion {
-  US_EAST = 'us-east',
-  US_WEST = 'us-west',
-  EU_WEST = 'eu-west',
-  EU_CENTRAL = 'eu-central',
-  AP_SOUTHEAST = 'ap-southeast',
-}
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('tenants')
 export class Tenant {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ unique: true })
+  slug: string;        // Subdomain identifier: tenant-slug
+
+  @Column()
   name: string;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
-  subdomain: string;
+  @Column({ type: 'varchar', nullable: true, unique: true })
+  customDomain: string | null;  // e.g., client.com
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  stripeCustomerId: string;
+  @Column({ default: 'free' })
+  planTier: string;
 
-  @Column({
-    type: 'enum',
-    enum: TenantRegion,
-    default: TenantRegion.US_EAST,
-  })
-  region: TenantRegion;
+  @Column({ type: 'varchar', nullable: true })
+  stripeCustomerId: string | null;
 
-  @Column({
-    type: 'enum',
-    enum: TenantPlan,
-    default: TenantPlan.FREE,
-  })
-  plan: TenantPlan;
+  @Column({ type: 'varchar', nullable: true })
+  stripeSubscriptionId: string | null;
+
+  @Column({ default: 'active' })
+  subscriptionStatus: string;
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

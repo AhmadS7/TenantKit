@@ -1,71 +1,54 @@
 import { Injectable, NestMiddleware, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Request, Response, NextFunction } from 'express';
-import { DataSource, Repository } from 'typeorm';
 import { Tenant } from './tenant.entity';
-
-export interface TenantRequest extends Request {
-  tenant: Tenant;
-}
+import { tenantStorage } from './tenant-context';
 
 @Injectable()
 export class TenantMiddleware implements NestMiddleware {
-  private tenantRepository: Repository<Tenant>;
+  constructor(
+    @InjectRepository(Tenant)
+    private tenantRepo: Repository<Tenant>,
+  ) {}
 
-  constructor(private dataSource: DataSource) {
-    this.tenantRepository = this.dataSource.getRepository(Tenant);
-  }
-
-  async use(req: TenantRequest, res: Response, next: NextFunction) {
+  async use(req: Request, res: Response, next: NextFunction) {
     try {
-      const subdomain = this.extractSubdomain(req.headers.host || '');
-
-      if (!subdomain) {
-        throw new NotFoundException('No subdomain provided');
-      }
-
-      const tenant = await this.tenantRepository.findOne({
-        where: { subdomain },
-      });
-
+      const host = req.headers.host?.toLowerCase().split(':')[0] || '';
+      
+      const tenant = await this.resolveTenant(host);
       if (!tenant) {
-        throw new NotFoundException(`Tenant not found for subdomain: ${subdomain}`);
+        throw new NotFoundException(`Tenant not found for host: ${host}`);
       }
 
-      // Set the tenant context in the database session
-      await this.dataSource.query(`SET LOCAL app.current_tenant = '${tenant.id}'`);
-
-      // Attach tenant to request
-      req.tenant = tenant;
-
-      next();
+      tenantStorage.run(
+        { tenantId: tenant.id, tenantSlug: tenant.slug, tenantName: tenant.name },
+        () => next()
+      );
     } catch (error) {
       next(error);
     }
   }
 
-  private extractSubdomain(host: string): string | null {
-    if (!host || host.trim() === '') return null;
+  private async resolveTenant(host: string): Promise<Tenant | null> {
+    // 1. Custom domain lookup
+    const byDomain = await this.tenantRepo.findOne({ 
+      where: { customDomain: host } 
+    });
+    if (byDomain) return byDomain;
 
-    // Remove port if present
-    const hostWithoutPort = host.split(':')[0];
-
-    // Handle localhost development cases
-    if (hostWithoutPort === 'localhost' || hostWithoutPort.endsWith('.localhost')) {
-      // For localhost, expect format: subdomain.localhost or subdomain.localhost:port
-      const parts = hostWithoutPort.split('.');
-      if (parts.length >= 2 && parts[parts.length - 1] === 'localhost') {
-        return parts[0];
-      }
-    }
-
-    // For production domains, assume format: subdomain.domain.com
-    const parts = hostWithoutPort.split('.');
+    // 2. Subdomain extraction: slug.cortex.app or slug.localhost
+    const parts = host.split('.');
     if (parts.length >= 3) {
-      // Return the first part as subdomain (e.g., 'tenant' from 'tenant.example.com')
-      return parts[0];
+      const slug = parts[0];
+      return this.tenantRepo.findOne({ where: { slug } });
     }
 
-    // If we can't determine a subdomain, return null
+    // 3. localhost dev: tenant.localhost
+    if (parts.length === 2 && parts[1] === 'localhost') {
+      return this.tenantRepo.findOne({ where: { slug: parts[0] } });
+    }
+
     return null;
   }
 }

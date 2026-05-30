@@ -1,6 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index, Unique } from 'typeorm';
-import { Tenant } from '../tenancy/tenant.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, Index } from 'typeorm';
 import { User } from '../users/user.entity';
+import { Tenant } from '../tenancy/tenant.entity';
 
 export enum MembershipRole {
   OWNER = 'owner',
@@ -9,34 +9,41 @@ export enum MembershipRole {
   VIEWER = 'viewer',
 }
 
+export enum MembershipStatus {
+  ACTIVE = 'active',
+  PENDING = 'pending',
+  SUSPENDED = 'suspended',
+}
+
 @Entity('memberships')
-@Index(['tenant_id', 'id'])
-@Unique(['tenant_id', 'user_id'])
+@Index(['userId', 'tenantId'], { unique: true })
 export class Membership {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid' })
-  tenant_id: string;
+  @Column({ name: 'user_id', type: 'uuid' })
+  userId: string;
 
-  @Column({ type: 'uuid' })
-  user_id: string;
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
-  @Column({
-    type: 'enum',
-    enum: MembershipRole,
-    default: MembershipRole.MEMBER,
-  })
-  role: MembershipRole;
+  @Column({ name: 'tenant_id', type: 'uuid' })
+  tenantId: string;
 
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @ManyToOne(() => Tenant)
+  @ManyToOne(() => Tenant, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tenant_id' })
   tenant: Tenant;
 
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'user_id' })
-  user: User;
+  @Column({ type: 'enum', enum: MembershipRole, default: MembershipRole.MEMBER })
+  role: MembershipRole;
+
+  @Column({ type: 'enum', enum: MembershipStatus, default: MembershipStatus.PENDING })
+  status: MembershipStatus;
+
+  @Column({ type: 'uuid', nullable: true })
+  invitedBy: string | null;
+
+  @CreateDateColumn()
+  createdAt: Date;
 }

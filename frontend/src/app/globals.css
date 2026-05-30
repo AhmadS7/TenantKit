@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+:root {
+  --background: #060608;
+  --foreground: #f8fafc;
+  --card: rgba(15, 17, 23, 0.7);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --primary-glow: radial-gradient(rgba(124, 58, 237, 0.15), rgba(0, 0, 0, 0));
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui;
+  overflow-x: hidden;
+}
+
+/* Premium Styling Utilities */
+.glass-panel {
+  background: var(--card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glow-bg {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: var(--primary-glow);
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Micro-animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.transition-all-300 {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

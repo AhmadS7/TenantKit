@@ -1,28 +1,31 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
 
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ unique: true })
   email: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  firstName: string;
-
-  @Column({ type: 'varchar', length: 255 })
-  lastName: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column()
   passwordHash: string;
 
-  @Column({ type: 'boolean', default: false })
-  isEmailVerified: boolean;
+  @Column({ type: 'varchar', nullable: true })
+  refreshTokenHash: string | null;
+
+  @Column({ default: false })
+  emailVerified: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastLoginAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt: Date | null;
 }

@@ -36,29 +36,29 @@ export class EnableRls1735774200000 implements MigrationInterface {
     await queryRunner.query(`
       DO $$
       BEGIN
-          IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'cortex_app') THEN
-              CREATE ROLE cortex_app LOGIN PASSWORD 'change_this_password';
+          IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'tenantkit_app') THEN
+              CREATE ROLE tenantkit_app LOGIN PASSWORD 'change_this_password';
           END IF;
 
-          ALTER ROLE cortex_app NOSUPERUSER;
-          ALTER ROLE cortex_app NOBYPASSRLS;
+          ALTER ROLE tenantkit_app NOSUPERUSER;
+          ALTER ROLE tenantkit_app NOBYPASSRLS;
 
-          GRANT CONNECT ON DATABASE cortex TO cortex_app;
-          GRANT USAGE ON SCHEMA public TO cortex_app;
+          GRANT CONNECT ON DATABASE tenantkit TO tenantkit_app;
+          GRANT USAGE ON SCHEMA public TO tenantkit_app;
       END $$;
     `);
 
     // Grant permissions on existing tables and sequences
-    await queryRunner.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO cortex_app;`);
-    await queryRunner.query(`GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO cortex_app;`);
+    await queryRunner.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO tenantkit_app;`);
+    await queryRunner.query(`GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO tenantkit_app;`);
 
     // We also alter default privileges for tables created in the future:
     try {
       await queryRunner.query(`
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO cortex_app;
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO tenantkit_app;
       `);
       await queryRunner.query(`
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO cortex_app;
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO tenantkit_app;
       `);
     } catch (e) {
       // Ignore if not supported in current environment

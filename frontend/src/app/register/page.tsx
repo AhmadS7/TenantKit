@@ -71,7 +71,7 @@ export default function Register() {
               <Shield className="w-6 h-6 text-white" />
             </div>
             <span className="font-bold text-2xl tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-              CORTEX
+              TENANTKIT
             </span>
           </Link>
           <h2 className="text-xl text-slate-400">Create your secure workspace</h2>
@@ -120,7 +120,7 @@ export default function Register() {
                   className="bg-transparent border-none text-white focus:outline-none w-full text-sm placeholder:text-slate-600"
                   required
                 />
-                <span className="text-sm font-semibold text-slate-500">.cortex.app</span>
+                <span className="text-sm font-semibold text-slate-500">.tenantkit.app</span>
               </div>
               <p className="text-[10px] text-slate-500 mt-1">
                 Subdomain must be lowercase, alphanumeric, and hyphens.

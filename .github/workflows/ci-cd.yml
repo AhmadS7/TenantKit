@@ -1,4 +1,4 @@
-name: Cortex CI/CD Pipeline
+name: TenantKit CI/CD Pipeline
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_DB: cortex
+          POSTGRES_DB: tenantkit
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
         ports:

@@ -1,10 +1,10 @@
 resource "aws_elasticache_subnet_group" "redis" {
-  name       = "cortex-${var.environment}-redis-subnet-group"
+  name       = "tenantkit-${var.environment}-redis-subnet-group"
   subnet_ids = aws_subnet.private[*].id
 }
 
 resource "aws_security_group" "redis" {
-  name        = "cortex-${var.environment}-redis-sg"
+  name        = "tenantkit-${var.environment}-redis-sg"
   description = "Security group for ElastiCache Redis"
   vpc_id      = aws_vpc.main.id
 
@@ -26,12 +26,12 @@ resource "aws_security_group" "redis" {
   }
 
   tags = {
-    Name = "cortex-${var.environment}-redis-sg"
+    Name = "tenantkit-${var.environment}-redis-sg"
   }
 }
 
 resource "aws_elasticache_cluster" "redis" {
-  cluster_id           = "cortex-${var.environment}-redis"
+  cluster_id           = "tenantkit-${var.environment}-redis"
   engine               = "redis"
   node_type            = var.redis_node_type
   num_cache_nodes      = 1
@@ -41,6 +41,6 @@ resource "aws_elasticache_cluster" "redis" {
   security_group_ids   = [aws_security_group.redis.id]
 
   tags = {
-    Name = "cortex-${var.environment}-redis"
+    Name = "tenantkit-${var.environment}-redis"
   }
 }

@@ -37,7 +37,7 @@ export class TenantMiddleware implements NestMiddleware {
     });
     if (byDomain) return byDomain;
 
-    // 2. Subdomain extraction: slug.cortex.app or slug.localhost
+    // 2. Subdomain extraction: slug.tenantkit.app or slug.localhost
     const parts = host.split('.');
     if (parts.length >= 3) {
       const slug = parts[0];

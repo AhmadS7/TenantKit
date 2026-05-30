@@ -26,7 +26,7 @@ function LoginForm() {
       const parts = hostname.split('.');
       
       // If we have a subdomain (not www and host length >= 2)
-      if (parts.length >= 2 && parts[0] !== 'www' && (parts[1] === 'localhost' || parts[1] === 'cortex')) {
+      if (parts.length >= 2 && parts[0] !== 'www' && (parts[1] === 'localhost' || parts[1] === 'tenantkit')) {
         setSubdomain(parts[0]);
         setIsGlobal(false);
       } else {
@@ -84,7 +84,7 @@ function LoginForm() {
             <Shield className="w-6 h-6 text-white" />
           </div>
           <span className="font-bold text-2xl tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-            CORTEX
+            TENANTKIT
           </span>
         </Link>
         <h2 className="text-xl text-slate-400">
@@ -118,7 +118,7 @@ function LoginForm() {
                   placeholder="your-workspace"
                   className="bg-transparent border-none text-white focus:outline-none w-full text-sm placeholder:text-slate-600"
                 />
-                <span className="text-sm font-semibold text-slate-500">.cortex.app</span>
+                <span className="text-sm font-semibold text-slate-500">.tenantkit.app</span>
               </div>
               <p className="text-xs text-slate-500 mt-2">
                 Enter the subdomain associated with your organization.

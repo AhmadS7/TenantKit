@@ -1,5 +1,5 @@
 resource "aws_security_group" "alb" {
-  name        = "cortex-${var.environment}-alb-sg"
+  name        = "tenantkit-${var.environment}-alb-sg"
   description = "Security group for Application Load Balancer"
   vpc_id      = aws_vpc.main.id
 
@@ -30,25 +30,25 @@ resource "aws_security_group" "alb" {
   }
 
   tags = {
-    Name = "cortex-${var.environment}-alb-sg"
+    Name = "tenantkit-${var.environment}-alb-sg"
   }
 }
 
 resource "aws_lb" "main" {
-  name               = "cortex-${var.environment}-alb"
+  name               = "tenantkit-${var.environment}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
   subnets            = aws_subnet.public[*].id
 
   tags = {
-    Name = "cortex-${var.environment}-alb"
+    Name = "tenantkit-${var.environment}-alb"
   }
 }
 
 # Target Group for Next.js Frontend
 resource "aws_lb_target_group" "frontend" {
-  name        = "cortex-${var.environment}-tg-front"
+  name        = "tenantkit-${var.environment}-tg-front"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
@@ -66,7 +66,7 @@ resource "aws_lb_target_group" "frontend" {
 
 # Target Group for NestJS Backend
 resource "aws_lb_target_group" "backend" {
-  name        = "cortex-${var.environment}-tg-back"
+  name        = "tenantkit-${var.environment}-tg-back"
   port        = 3000
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id

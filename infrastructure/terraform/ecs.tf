@@ -1,5 +1,5 @@
 resource "aws_security_group" "ecs" {
-  name        = "cortex-${var.environment}-ecs-sg"
+  name        = "tenantkit-${var.environment}-ecs-sg"
   description = "Security group for ECS Fargate tasks"
   vpc_id      = aws_vpc.main.id
 
@@ -20,17 +20,17 @@ resource "aws_security_group" "ecs" {
   }
 
   tags = {
-    Name = "cortex-${var.environment}-ecs-sg"
+    Name = "tenantkit-${var.environment}-ecs-sg"
   }
 }
 
 resource "aws_ecs_cluster" "main" {
-  name = "cortex-${var.environment}-cluster"
+  name = "tenantkit-${var.environment}-cluster"
 }
 
 # ECS IAM Task Execution Role
 resource "aws_iam_role" "ecs_execution" {
-  name = "cortex-${var.environment}-ecs-execution-role"
+  name = "tenantkit-${var.environment}-ecs-execution-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -51,7 +51,7 @@ resource "aws_iam_role_policy_attachment" "ecs_execution" {
 
 # ECS Task Role (allows containers to speak to other AWS services like S3 or SES)
 resource "aws_iam_role" "ecs_task" {
-  name = "cortex-${var.environment}-ecs-task-role"
+  name = "tenantkit-${var.environment}-ecs-task-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -67,18 +67,18 @@ resource "aws_iam_role" "ecs_task" {
 
 # CloudWatch Log Groups for container logs
 resource "aws_cloudwatch_log_group" "backend" {
-  name              = "/ecs/cortex-${var.environment}-backend"
+  name              = "/ecs/tenantkit-${var.environment}-backend"
   retention_in_days = 30
 }
 
 resource "aws_cloudwatch_log_group" "frontend" {
-  name              = "/ecs/cortex-${var.environment}-frontend"
+  name              = "/ecs/tenantkit-${var.environment}-frontend"
   retention_in_days = 30
 }
 
 # Backend Task Definition
 resource "aws_ecs_task_definition" "backend" {
-  family                   = "cortex-${var.environment}-backend"
+  family                   = "tenantkit-${var.environment}-backend"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
@@ -89,7 +89,7 @@ resource "aws_ecs_task_definition" "backend" {
   container_definitions = jsonencode([
     {
       name      = "backend"
-      image     = "cortex-backend:latest"
+      image     = "tenantkit-backend:latest"
       essential = true
       portMappings = [
         {
@@ -110,15 +110,15 @@ resource "aws_ecs_task_definition" "backend" {
         { name = "DB_HOST", value = aws_db_instance.postgres.address },
         { name = "DB_PORT", value = "5432" },
         { name = "DB_USERNAME", value = var.db_username },
-        { name = "DB_DATABASE", value = "cortex" },
+        { name = "DB_DATABASE", value = "tenantkit" },
         { name = "REDIS_HOST", value = aws_elasticache_cluster.redis.cache_nodes[0].address },
         { name = "REDIS_PORT", value = "6379" }
       ]
       secrets = [
-        { name = "DB_PASSWORD", valueFrom = "${aws_secretsmanager_secret.cortex_secrets.arn}:db_password::" },
-        { name = "JWT_SECRET", valueFrom = "${aws_secretsmanager_secret.cortex_secrets.arn}:jwt_secret::" },
-        { name = "STRIPE_API_KEY", valueFrom = "${aws_secretsmanager_secret.cortex_secrets.arn}:stripe_api_key::" },
-        { name = "STRIPE_WEBHOOK_SECRET", valueFrom = "${aws_secretsmanager_secret.cortex_secrets.arn}:stripe_webhook_secret::" }
+        { name = "DB_PASSWORD", valueFrom = "${aws_secretsmanager_secret.tenantkit_secrets.arn}:db_password::" },
+        { name = "JWT_SECRET", valueFrom = "${aws_secretsmanager_secret.tenantkit_secrets.arn}:jwt_secret::" },
+        { name = "STRIPE_API_KEY", valueFrom = "${aws_secretsmanager_secret.tenantkit_secrets.arn}:stripe_api_key::" },
+        { name = "STRIPE_WEBHOOK_SECRET", valueFrom = "${aws_secretsmanager_secret.tenantkit_secrets.arn}:stripe_webhook_secret::" }
       ]
     }
   ])
@@ -126,7 +126,7 @@ resource "aws_ecs_task_definition" "backend" {
 
 # Frontend Task Definition
 resource "aws_ecs_task_definition" "frontend" {
-  family                   = "cortex-${var.environment}-frontend"
+  family                   = "tenantkit-${var.environment}-frontend"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
@@ -137,7 +137,7 @@ resource "aws_ecs_task_definition" "frontend" {
   container_definitions = jsonencode([
     {
       name      = "frontend"
-      image     = "cortex-frontend:latest"
+      image     = "tenantkit-frontend:latest"
       essential = true
       portMappings = [
         {
@@ -155,7 +155,7 @@ resource "aws_ecs_task_definition" "frontend" {
       }
       environment = [
         { name = "NODE_ENV", value = "production" },
-        { name = "NEXT_PUBLIC_API_URL", value = "https://cortex.app/v1" } # Point to custom domain via ALB
+        { name = "NEXT_PUBLIC_API_URL", value = "https://tenantkit.app/v1" } # Point to custom domain via ALB
       ]
     }
   ])
@@ -163,7 +163,7 @@ resource "aws_ecs_task_definition" "frontend" {
 
 # Backend Service
 resource "aws_ecs_service" "backend" {
-  name            = "cortex-${var.environment}-backend"
+  name            = "tenantkit-${var.environment}-backend"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.backend.arn
   desired_count   = 2
@@ -186,7 +186,7 @@ resource "aws_ecs_service" "backend" {
 
 # Frontend Service
 resource "aws_ecs_service" "frontend" {
-  name            = "cortex-${var.environment}-frontend"
+  name            = "tenantkit-${var.environment}-frontend"
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.frontend.arn
   desired_count   = 2
@@ -208,13 +208,13 @@ resource "aws_ecs_service" "frontend" {
 }
 
 # AWS Secrets Manager Secret definitions
-resource "aws_secretsmanager_secret" "cortex_secrets" {
-  name                    = "cortex-${var.environment}-secrets"
+resource "aws_secretsmanager_secret" "tenantkit_secrets" {
+  name                    = "tenantkit-${var.environment}-secrets"
   recovery_window_in_days = 0
 }
 
-resource "aws_secretsmanager_secret_version" "cortex_secrets_val" {
-  secret_id     = aws_secretsmanager_secret.cortex_secrets.id
+resource "aws_secretsmanager_secret_version" "tenantkit_secrets_val" {
+  secret_id     = aws_secretsmanager_secret.tenantkit_secrets.id
   secret_string = jsonencode({
     db_password           = var.db_password
     jwt_secret            = var.jwt_secret
@@ -224,7 +224,7 @@ resource "aws_secretsmanager_secret_version" "cortex_secrets_val" {
 }
 
 resource "aws_iam_policy" "ecs_secrets" {
-  name        = "cortex-${var.environment}-ecs-secrets-policy"
+  name        = "tenantkit-${var.environment}-ecs-secrets-policy"
   description = "Allows ECS execution role to retrieve secrets from Secrets Manager"
 
   policy = jsonencode({
@@ -236,7 +236,7 @@ resource "aws_iam_policy" "ecs_secrets" {
           "secretsmanager:GetSecretValue"
         ]
         Resource = [
-          aws_secretsmanager_secret.cortex_secrets.arn
+          aws_secretsmanager_secret.tenantkit_secrets.arn
         ]
       }
     ]

@@ -30,14 +30,14 @@ export function middleware(req: NextRequest) {
   // e.g. company.localhost:3000 -> company
   if (hostname.includes('.localhost:3000')) {
     tenant = hostname.replace('.localhost:3000', '');
-  } else if (hostname.includes('.cortex.app')) {
-    tenant = hostname.replace('.cortex.app', '');
+  } else if (hostname.includes('.tenantkit.app')) {
+    tenant = hostname.replace('.tenantkit.app', '');
   } else {
-    // If it's localhost:3000 or cortex.app or www.cortex.app, we treat it as root
+    // If it's localhost:3000 or tenantkit.app or www.tenantkit.app, we treat it as root
     if (
       hostname === 'localhost:3000' ||
-      hostname === 'cortex.app' ||
-      hostname === 'www.cortex.app'
+      hostname === 'tenantkit.app' ||
+      hostname === 'www.tenantkit.app'
     ) {
       tenant = '';
     } else {
@@ -50,7 +50,7 @@ export function middleware(req: NextRequest) {
   // Rewrite tenant-specific routes
   if (tenant && tenant !== 'www') {
     // If the path is public authentication routes, we can either keep them global or scope them.
-    // Usually, login and register can be tenant-scoped (e.g. company.cortex.app/login)
+    // Usually, login and register can be tenant-scoped (e.g. company.tenantkit.app/login)
     // We rewrite the request to the dynamic tenant folder path
     return NextResponse.rewrite(
       new URL(`/_tenants/${tenant}${url.pathname}${url.search}`, req.url)

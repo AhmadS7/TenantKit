@@ -1,4 +1,4 @@
-# Outputs for the Cortex infrastructure deployment
+# Outputs for the TenantKit infrastructure deployment
 
 output "alb_dns_name" {
   description = "Public DNS name of the Application Load Balancer"

@@ -17,7 +17,7 @@ async function bootstrap() {
   // Enable dynamic CORS matching subdomains and credentials
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || /https?:\/\/(localhost|.*\.localhost|.*\.cortex\.app)(:\d+)?$/.test(origin)) {
+      if (!origin || /https?:\/\/(localhost|.*\.localhost|.*\.tenantkit\.app)(:\d+)?$/.test(origin)) {
         callback(null, true);
       } else {
         callback(null, true); // Allow custom client domains as well
@@ -50,7 +50,7 @@ async function bootstrap() {
 
   // Enable Swagger/OpenAPI docs
   const config = new DocumentBuilder()
-    .setTitle('Cortex API')
+    .setTitle('TenantKit API')
     .setDescription('Multi-tenant SaaS API endpoints')
     .setVersion('1.0')
     .addBearerAuth()

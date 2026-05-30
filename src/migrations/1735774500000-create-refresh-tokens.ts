@@ -18,9 +18,9 @@ export class CreateRefreshTokens1735774500000 implements MigrationInterface {
       CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash);
     `);
 
-    // Grant permissions on new table to cortex_app
+    // Grant permissions on new table to tenantkit_app
     try {
-      await queryRunner.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON refresh_tokens TO cortex_app;`);
+      await queryRunner.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON refresh_tokens TO tenantkit_app;`);
     } catch (e) {
       // Ignore if role permissions not fully set up in this test session
     }

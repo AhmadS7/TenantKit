@@ -1,14 +1,14 @@
 resource "aws_db_subnet_group" "db" {
-  name       = "cortex-${var.environment}-db-subnet-group"
+  name       = "tenantkit-${var.environment}-db-subnet-group"
   subnet_ids = aws_subnet.private[*].id
 
   tags = {
-    Name = "cortex-${var.environment}-db-subnet-group"
+    Name = "tenantkit-${var.environment}-db-subnet-group"
   }
 }
 
 resource "aws_security_group" "rds" {
-  name        = "cortex-${var.environment}-rds-sg"
+  name        = "tenantkit-${var.environment}-rds-sg"
   description = "Security group for PostgreSQL RDS"
   vpc_id      = aws_vpc.main.id
 
@@ -30,15 +30,15 @@ resource "aws_security_group" "rds" {
   }
 
   tags = {
-    Name = "cortex-${var.environment}-rds-sg"
+    Name = "tenantkit-${var.environment}-rds-sg"
   }
 }
 
 resource "aws_db_instance" "postgres" {
-  identifier           = "cortex-${var.environment}-rds"
+  identifier           = "tenantkit-${var.environment}-rds"
   allocated_storage    = 20
   max_allocated_storage = 100
-  db_name              = "cortex"
+  db_name              = "tenantkit"
   engine               = "postgres"
   engine_version       = "16.1" # Standard robust postgres version
   instance_class       = "db.t4g.micro"
@@ -50,6 +50,6 @@ resource "aws_db_instance" "postgres" {
   multi_az             = var.environment == "production"
 
   tags = {
-    Name = "cortex-${var.environment}-postgres"
+    Name = "tenantkit-${var.environment}-postgres"
   }
 }

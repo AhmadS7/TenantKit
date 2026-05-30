@@ -84,7 +84,7 @@ export default function Billing() {
               <Shield className="w-4 h-4 text-white" />
             </div>
             <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-              CORTEX
+              TENANTKIT
             </span>
           </div>
 

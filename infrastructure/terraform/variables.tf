@@ -19,7 +19,7 @@ variable "vpc_cidr" {
 variable "db_username" {
   type        = string
   description = "Administrator username for PostgreSQL RDS"
-  default     = "cortex_admin"
+  default     = "tenantkit_admin"
 }
 
 variable "db_password" {

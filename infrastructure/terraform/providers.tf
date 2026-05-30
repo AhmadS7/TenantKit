@@ -10,10 +10,10 @@ terraform {
 
   # In production, uncomment the following block to use S3 for remote state
   # backend "s3" {
-  #   bucket         = "cortex-tf-state-prod"
+  #   bucket         = "tenantkit-tf-state-prod"
   #   key            = "state/terraform.tfstate"
   #   region         = "us-east-1"
-  #   dynamodb_table = "cortex-tf-locks"
+  #   dynamodb_table = "tenantkit-tf-locks"
   #   encrypt        = true
   # }
 }
@@ -23,7 +23,7 @@ provider "aws" {
 
   default_tags {
     tags = {
-      Project   = "Cortex"
+      Project   = "TenantKit"
       ManagedBy = "Terraform"
       Env       = var.environment
     }

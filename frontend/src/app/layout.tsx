@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Cortex - Production Grade Multi-Tenant SaaS Boilerplate',
+  title: 'TenantKit - Production Grade Multi-Tenant SaaS Boilerplate',
   description: 'A robust, multi-tenant boilerplate built with Next.js 15, NestJS, PostgreSQL RLS, and Stripe.',
 };
 

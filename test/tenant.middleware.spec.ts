@@ -84,7 +84,7 @@ describe('TenantMiddleware', () => {
       });
 
       const mockReq = {
-        headers: { host: 'my-tenant.cortex.app' },
+        headers: { host: 'my-tenant.tenantkit.app' },
       };
       const mockRes = {};
       const mockNext = jest.fn();

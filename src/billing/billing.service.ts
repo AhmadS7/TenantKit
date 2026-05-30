@@ -60,7 +60,7 @@ export class BillingService {
 
       if (!stripeCustomerId) {
         const customer = await this.stripe.customers.create({
-          email: `${tenant.slug}@cortex-tenant.app`,
+          email: `${tenant.slug}@tenantkit-tenant.app`,
           name: tenant.name,
           metadata: { tenantId: tenant.id },
         });

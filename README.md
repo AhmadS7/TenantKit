@@ -1,4 +1,4 @@
-# Cortex
+# TenantKit
 
 > **Production-Ready Multi-Tenant SaaS Boilerplate**  
 > Built by **Ahmad Shah** — because every SaaS founder deserves a secure, scalable foundation without rebuilding auth, billing, and tenancy from scratch.
@@ -7,7 +7,7 @@
 
 ## 🎯 Who Is This For?
 
-**Cortex** is engineered for developers and teams who are tired of:
+**TenantKit** is engineered for developers and teams who are tired of:
 
 - Rebuilding authentication, roles, and permissions for every new SaaS project
 - Worrying about one tenant accidentally seeing another tenant's data
@@ -19,11 +19,11 @@ If you are an **indie hacker**, **agency owner**, **startup CTO**, or **full-sta
 
 ---
 
-## 🚀 What Cortex Solves
+## 🚀 What TenantKit Solves
 
-Most SaaS boilerplates give you a login page and call it a day. Cortex gives you a **battle-tested architecture** that handles the hard problems so you can focus on your product:
+Most SaaS boilerplates give you a login page and call it a day. TenantKit gives you a **battle-tested architecture** that handles the hard problems so you can focus on your product:
 
-| Problem | How Cortex Solves It |
+| Problem | How TenantKit Solves It |
 |---------|---------------------|
 | **Tenant Data Leakage** | PostgreSQL Row-Level Security (RLS) + AsyncLocalStorage request isolation — every query is scoped to the current tenant by default |
 | **Auth Complexity** | JWT access/refresh tokens with rotation, reuse detection, role-based access control (RBAC), and atomic user+tenant provisioning |
@@ -142,8 +142,8 @@ Most SaaS boilerplates give you a login page and call it a day. Cortex gives you
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/AhmadS7/cortex.git
-cd cortex
+git clone https://github.com/AhmadS7/TenantKit.git
+cd TenantKit
 npm install
 cd frontend && npm install && cd ..
 ```
@@ -268,9 +268,9 @@ Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 
 ## 👤 About the Author
 
-**Ahmad Shah** is a self-taught software engineer with 10+ years of experience building production systems across frontend, backend, and infrastructure. Cortex was built to solve a real problem: every SaaS project starts with the same 3 months of boilerplate. This is the boilerplate I wish I had when I started.
+**Ahmad Shah** is a self-taught software engineer with 10+ years of experience building production systems across frontend, backend, and infrastructure. TenantKit was built to solve a real problem: every SaaS project starts with the same 3 months of boilerplate. This is the boilerplate I wish I had when I started.
 
-> *"I built Cortex because I was tired of rebuilding auth, billing, and tenancy for every client project. Now I spin up a new SaaS in hours, not weeks. I hope it saves you the same time."* — **Ahmad Shah**
+> *"I built TenantKit because I was tired of rebuilding auth, billing, and tenancy for every client project. Now I spin up a new SaaS in hours, not weeks. I hope it saves you the same time."* — **Ahmad Shah**
 
 ---
 
@@ -288,9 +288,9 @@ If this project helped you ship faster, please consider:
 
 ## 🔗 Links
 
-- **Repository**: https://github.com/AhmadS7/cortex
-- **Issues & Roadmap**: https://github.com/AhmadS7/cortex/issues
-- **Discussions**: https://github.com/AhmadS7/cortex/discussions
+- **Repository**: https://github.com/AhmadS7/TenantKit
+- **Issues & Roadmap**: https://github.com/AhmadS7/TenantKit/issues
+- **Discussions**: https://github.com/AhmadS7/TenantKit/discussions
 
 ---
 

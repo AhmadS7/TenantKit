@@ -14,7 +14,7 @@ SaaS boilerplate applications require a rock-solid security boundary between cus
 ### 1. Hybrid Multi-Tenancy Isolation
 We implement a hybrid model combining **application-level filters** with **PostgreSQL Row-Level Security (RLS)** as defense-in-depth:
 - **Application Level**: A custom `TenantAwareRepository` extends TypeORM's base repository. It automatically inspects if the queried entity has a `tenantId` field and appends `where: { tenantId }` to every query, resolving the active tenant ID from request-scoped context.
-- **Database Level (RLS)**: Row-Level Security is active on the `tenants`, `memberships`, and other business tables. PostgreSQL policies verify table accesses against `current_tenant_id()` and `current_user_id()` session settings (`SET LOCAL app.current_tenant`). In production, the application connects as a non-superuser role `cortex_app` to enforce RLS.
+- **Database Level (RLS)**: Row-Level Security is active on the `tenants`, `memberships`, and other business tables. PostgreSQL policies verify table accesses against `current_tenant_id()` and `current_user_id()` session settings (`SET LOCAL app.current_tenant`). In production, the application connects as a non-superuser role `tenantkit_app` to enforce RLS.
 
 ### 2. Request-Scoped Context via `AsyncLocalStorage`
 Instead of passing `tenantId` parameters down through NestJS services, we use Node.js's native `AsyncLocalStorage`.

@@ -20,7 +20,7 @@ export default function Home() {
             <Shield className="w-5 h-5 text-white" />
           </div>
           <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-            CORTEX
+            TENANTKIT
           </span>
         </div>
         <div className="flex items-center space-x-4">
@@ -122,7 +122,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="w-full max-w-6xl text-center text-slate-500 text-xs py-8 border-t border-white/5 z-10">
-        <p>&copy; {new Date().getFullYear()} Cortex App. Built with Google DeepMind Antigravity.</p>
+        <p>&copy; {new Date().getFullYear()} TenantKit App. Built with Google DeepMind Antigravity.</p>
       </footer>
     </div>
   );

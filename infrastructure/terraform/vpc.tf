@@ -8,7 +8,7 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
 
   tags = {
-    Name = "cortex-${var.environment}-vpc"
+    Name = "tenantkit-${var.environment}-vpc"
   }
 }
 
@@ -16,7 +16,7 @@ resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "cortex-${var.environment}-igw"
+    Name = "tenantkit-${var.environment}-igw"
   }
 }
 
@@ -29,7 +29,7 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "cortex-${var.environment}-public-${count.index}"
+    Name = "tenantkit-${var.environment}-public-${count.index}"
   }
 }
 
@@ -41,7 +41,7 @@ resource "aws_subnet" "private" {
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
-    Name = "cortex-${var.environment}-private-${count.index}"
+    Name = "tenantkit-${var.environment}-private-${count.index}"
   }
 }
 
@@ -49,7 +49,7 @@ resource "aws_subnet" "private" {
 resource "aws_eip" "nat" {
   domain = "vpc"
   tags = {
-    Name = "cortex-${var.environment}-nat-eip"
+    Name = "tenantkit-${var.environment}-nat-eip"
   }
 }
 
@@ -59,7 +59,7 @@ resource "aws_nat_gateway" "nat" {
   subnet_id     = aws_subnet.public[0].id
 
   tags = {
-    Name = "cortex-${var.environment}-nat-gw"
+    Name = "tenantkit-${var.environment}-nat-gw"
   }
 
   depends_on = [aws_internet_gateway.gw]
@@ -75,7 +75,7 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "cortex-${var.environment}-public-rt"
+    Name = "tenantkit-${var.environment}-public-rt"
   }
 }
 
@@ -89,7 +89,7 @@ resource "aws_route_table" "private" {
   }
 
   tags = {
-    Name = "cortex-${var.environment}-private-rt"
+    Name = "tenantkit-${var.environment}-private-rt"
   }
 }
 

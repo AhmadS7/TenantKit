@@ -91,7 +91,7 @@ export default function Dashboard() {
               <Shield className="w-4 h-4 text-white" />
             </div>
             <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-              CORTEX
+              TENANTKIT
             </span>
           </div>
 
@@ -185,7 +185,7 @@ export default function Dashboard() {
             <div>
               <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-0.5">Tenant Subdomain</p>
               <p className="text-xl font-bold text-white truncate max-w-[200px]">
-                {tenant?.slug}.cortex.app
+                {tenant?.slug}.tenantkit.app
               </p>
             </div>
           </div>

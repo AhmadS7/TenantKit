@@ -46,7 +46,7 @@ describe('AuthController (e2e)', () => {
       const res = await request(app.getHttpServer())
         .post('/v1/auth/register')
         .send({
-          email: 'owner@cortex.app',
+          email: 'owner@tenantkit.app',
           password: 'securepassword',
           tenantName: 'Acme Corp',
           tenantSlug: 'acme',
@@ -54,7 +54,7 @@ describe('AuthController (e2e)', () => {
         .expect(201);
 
       expect(res.body.user).toBeDefined();
-      expect(res.body.user.email).toBe('owner@cortex.app');
+      expect(res.body.user.email).toBe('owner@tenantkit.app');
       expect(res.body.tenant).toBeDefined();
       expect(res.body.tenant.slug).toBe('acme');
     });
@@ -64,7 +64,7 @@ describe('AuthController (e2e)', () => {
       await request(app.getHttpServer())
         .post('/v1/auth/register')
         .send({
-          email: 'dup@cortex.app',
+          email: 'dup@tenantkit.app',
           password: 'securepassword',
           tenantName: 'Acme 1',
           tenantSlug: 'acme1',
@@ -75,7 +75,7 @@ describe('AuthController (e2e)', () => {
       await request(app.getHttpServer())
         .post('/v1/auth/register')
         .send({
-          email: 'dup@cortex.app',
+          email: 'dup@tenantkit.app',
           password: 'differentpassword',
           tenantName: 'Acme 2',
           tenantSlug: 'acme2',
@@ -88,7 +88,7 @@ describe('AuthController (e2e)', () => {
       await request(app.getHttpServer())
         .post('/v1/auth/register')
         .send({
-          email: 'first@cortex.app',
+          email: 'first@tenantkit.app',
           password: 'securepassword',
           tenantName: 'Acme Corp',
           tenantSlug: 'acme-dup',
@@ -99,7 +99,7 @@ describe('AuthController (e2e)', () => {
       await request(app.getHttpServer())
         .post('/v1/auth/register')
         .send({
-          email: 'second@cortex.app',
+          email: 'second@tenantkit.app',
           password: 'securepassword',
           tenantName: 'Acme Copy',
           tenantSlug: 'acme-dup',
@@ -114,7 +114,7 @@ describe('AuthController (e2e)', () => {
       await request(app.getHttpServer())
         .post('/v1/auth/register')
         .send({
-          email: 'user@cortex.app',
+          email: 'user@tenantkit.app',
           password: 'loginpassword',
           tenantName: 'Workspace A',
           tenantSlug: 'work-a',
@@ -127,7 +127,7 @@ describe('AuthController (e2e)', () => {
       const loginRes = await request(app.getHttpServer())
         .post('/v1/auth/login')
         .send({
-          email: 'user@cortex.app',
+          email: 'user@tenantkit.app',
           password: 'loginpassword',
         })
         .expect(200);
@@ -166,7 +166,7 @@ describe('AuthController (e2e)', () => {
       const loginRes = await request(app.getHttpServer())
         .post('/v1/auth/login')
         .send({
-          email: 'user@cortex.app',
+          email: 'user@tenantkit.app',
           password: 'loginpassword',
         })
         .expect(200);
@@ -192,7 +192,7 @@ describe('AuthController (e2e)', () => {
       await request(app.getHttpServer())
         .post('/v1/auth/register')
         .send({
-          email: 'recover@cortex.app',
+          email: 'recover@tenantkit.app',
           password: 'oldpassword',
           tenantName: 'Recovery Workspace',
           tenantSlug: 'recovery',
@@ -204,7 +204,7 @@ describe('AuthController (e2e)', () => {
       // 1. Request password reset
       const reqRes = await request(app.getHttpServer())
         .post('/v1/auth/request-password-reset')
-        .send({ email: 'recover@cortex.app' })
+        .send({ email: 'recover@tenantkit.app' })
         .expect(200);
 
       expect(reqRes.body.resetToken).toBeDefined();
@@ -223,7 +223,7 @@ describe('AuthController (e2e)', () => {
       await request(app.getHttpServer())
         .post('/v1/auth/login')
         .send({
-          email: 'recover@cortex.app',
+          email: 'recover@tenantkit.app',
           password: 'oldpassword',
         })
         .expect(401);
@@ -232,7 +232,7 @@ describe('AuthController (e2e)', () => {
       const newLoginRes = await request(app.getHttpServer())
         .post('/v1/auth/login')
         .send({
-          email: 'recover@cortex.app',
+          email: 'recover@tenantkit.app',
           password: 'newsecurepassword',
         })
         .expect(200);

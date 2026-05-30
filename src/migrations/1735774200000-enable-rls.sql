@@ -31,25 +31,25 @@ CREATE POLICY memberships_tenant_isolation_policy ON memberships
 DO $$
 BEGIN
     -- Create the application role if it doesn't exist
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'cortex_app') THEN
-        CREATE ROLE cortex_app LOGIN PASSWORD 'change_this_password';
+    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'tenantkit_app') THEN
+        CREATE ROLE tenantkit_app LOGIN PASSWORD 'change_this_password';
     END IF;
 
     -- Ensure the role does NOT have SUPERUSER privileges
-    ALTER ROLE cortex_app NOSUPERUSER;
+    ALTER ROLE tenantkit_app NOSUPERUSER;
 
     -- Ensure the role does NOT have BYPASSRLS privileges
-    ALTER ROLE cortex_app NOBYPASSRLS;
+    ALTER ROLE tenantkit_app NOBYPASSRLS;
 
     -- Grant necessary permissions to the application role
-    GRANT CONNECT ON DATABASE cortex TO cortex_app;
-    GRANT USAGE ON SCHEMA public TO cortex_app;
-    GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO cortex_app;
-    GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO cortex_app;
+    GRANT CONNECT ON DATABASE tenantkit TO tenantkit_app;
+    GRANT USAGE ON SCHEMA public TO tenantkit_app;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO tenantkit_app;
+    GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO tenantkit_app;
 
     -- Grant permissions on future tables/sequences
-    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO cortex_app;
-    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO cortex_app;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO tenantkit_app;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO tenantkit_app;
 END $$;
 
 -- Create a special policy for the migrations table to allow the app role to bypass RLS

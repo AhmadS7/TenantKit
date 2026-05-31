@@ -1,17 +1,15 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { Membership } from './memberships/membership.entity';
 import { Tenant } from './tenancy/tenant.entity';
-import { tenantStorage } from './tenancy/tenant-context';
+import { tenantStorage, getTenantManager } from './tenancy/tenant-context';
 
 @Injectable()
 export class AppService {
   constructor(
-    @InjectRepository(Membership)
-    private membershipRepo: Repository<Membership>,
-    @InjectRepository(Tenant)
-    private tenantRepo: Repository<Tenant>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   async getDashboardSummary() {
@@ -20,8 +18,14 @@ export class AppService {
       throw new ForbiddenException('No tenant context found');
     }
 
+    // Run through the RLS-scoped manager so PostgreSQL Row-Level Security
+    // enforces tenant isolation on top of the application-level filter.
+    const manager = getTenantManager(this.dataSource.manager);
+    const tenantRepo = manager.getRepository(Tenant);
+    const membershipRepo = manager.getRepository(Membership);
+
     // Resolve tenant details
-    const tenant = await this.tenantRepo.findOne({
+    const tenant = await tenantRepo.findOne({
       where: { id: store.tenantId },
     });
 
@@ -29,11 +33,12 @@ export class AppService {
       throw new ForbiddenException('Tenant not found');
     }
 
-    // Resolve all memberships for the current tenant
-    // Note: Due to PostgreSQL RLS and/or application filtering, this only returns active tenant data.
-    const memberships = await this.membershipRepo.find({
+    // Resolve all memberships for the current tenant.
+    // RLS restricts these rows to tenant_id = current_tenant_id(); the explicit
+    // where clause is defense-in-depth at the application layer.
+    const memberships = await membershipRepo.find({
       where: { tenantId: store.tenantId },
-      relations: ['user'],
+      relations: { user: true },
     });
 
     const members = memberships.map((m) => ({

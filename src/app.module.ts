@@ -1,5 +1,5 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { TenantModule } from './tenancy/tenant.module';
 import { TenantMiddleware } from './tenancy/tenant.middleware';
 import { TenantGuard } from './tenancy/tenant.guard';
+import { RlsInterceptor } from './common/interceptors/rls.interceptor';
 import { User } from './users/user.entity';
 import { Membership } from './memberships/membership.entity';
 import { AuthModule } from './auth/auth.module';
@@ -46,6 +47,10 @@ import { BillingModule } from './billing/billing.module';
     {
       provide: APP_GUARD,
       useClass: TenantGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RlsInterceptor,
     },
   ],
 })

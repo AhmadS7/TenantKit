@@ -3,19 +3,24 @@ FROM node:22-alpine AS builder
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
-RUN npm ci
+# Enable pnpm via the Node-bundled corepack shim
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # --- Stage 2: Production Run ---
 FROM node:22-alpine AS runner
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
-RUN npm ci --only=production
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --prod --frozen-lockfile
 
 COPY --from=builder /usr/src/app/dist ./dist
 # Also copy migrations so the server can run them on start

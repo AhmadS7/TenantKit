@@ -1,7 +1,8 @@
 import { Injectable, BadRequestException, Logger, ForbiddenException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Tenant } from '../tenancy/tenant.entity';
+import { getTenantManager } from '../tenancy/tenant-context';
 import Stripe from 'stripe';
 
 @Injectable()
@@ -10,8 +11,8 @@ export class BillingService {
   private stripe: any = null;
 
   constructor(
-    @InjectRepository(Tenant)
-    private tenantRepo: Repository<Tenant>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {
     const apiKey = process.env.STRIPE_API_KEY;
     if (apiKey && apiKey !== 'change_me') {
@@ -22,6 +23,17 @@ export class BillingService {
     } else {
       this.logger.warn('Stripe API Key is not set or using placeholder. Running in Mock Sandbox Mode.');
     }
+  }
+
+  /**
+   * Tenant repository bound to the active request. When a tenant context is
+   * present (e.g. authenticated checkout) this resolves to the RLS-scoped
+   * transaction manager; on context-less paths (Stripe webhooks) it falls back
+   * to the privileged pool so we can look tenants up by Stripe customer id
+   * across the whole table.
+   */
+  private get tenantRepo(): Repository<Tenant> {
+    return getTenantManager(this.dataSource.manager).getRepository(Tenant);
   }
 
   async createCheckoutSession(tenantId: string, plan: string, host: string): Promise<{ url: string }> {

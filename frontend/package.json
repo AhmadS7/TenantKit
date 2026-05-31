@@ -11,12 +11,23 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^7.2.0",
+    "@fortawesome/free-solid-svg-icons": "^7.2.0",
+    "@fortawesome/react-fontawesome": "^3.3.1",
     "@tanstack/react-query": "^5.100.14",
     "axios": "^1.16.1",
+    "dompurify": "^3.4.7",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.17.0",
     "next": "16.2.6",
+    "qs": "^6.15.2",
     "react": "19.2.6",
     "react-dom": "19.2.6",
+    "react-hot-toast": "^2.6.0",
+    "react-select": "^5.10.2",
+    "xlsx": "^0.18.5",
+    "zod": "^4.4.3",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
@@ -26,6 +37,7 @@
     "@testing-library/react": "^16.3.2",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.9.1",
+    "@types/qs": "^6.15.1",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "eslint": "^10.4.1",

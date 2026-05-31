@@ -1,13 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
 import { Shield, Mail, Lock, Server, ArrowRight, AlertCircle, Building } from 'lucide-react';
 
 export default function Register() {
-  const router = useRouter();
   const { register, isLoading, error: authError } = useAuthStore();
 
   // Form states
@@ -43,7 +41,7 @@ export default function Register() {
     }
 
     try {
-      const res = await register(email, password, tenantName, tenantSlug);
+      await register(email, password, tenantName, tenantSlug);
       
       // On success, redirect the browser to the new tenant login page
       if (typeof window !== 'undefined') {
@@ -53,8 +51,8 @@ export default function Register() {
         // Redirect to the tenant-specific domain with email prefilled
         window.location.href = `http://${tenantSlug}.${domain}${port}/login?email=${encodeURIComponent(email)}`;
       }
-    } catch (err: any) {
-      setError(err.message || 'Registration failed.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed.');
     }
   };
 

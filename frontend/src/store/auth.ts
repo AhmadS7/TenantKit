@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import axios from 'axios';
 import { api } from '@/lib/api';
 
 interface User {
@@ -6,13 +7,19 @@ interface User {
   email: string;
 }
 
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+}
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<any>;
-  register: (email: string, password: string, tenantName: string, tenantSlug: string) => Promise<any>;
+  login: (email: string, password: string) => Promise<AuthResponse>;
+  register: (email: string, password: string, tenantName: string, tenantSlug: string) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   initialize: () => void;
 }
@@ -31,7 +38,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         try {
           const user = JSON.parse(userJson);
           set({ user, isAuthenticated: true, isLoading: false });
-        } catch (e) {
+        } catch {
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('user');
@@ -57,8 +64,9 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       set({ user, isAuthenticated: true, isLoading: false });
       return response.data;
-    } catch (err: any) {
-      const message = err.response?.data?.message || 'Login failed';
+    } catch (err) {
+      const message =
+        (axios.isAxiosError(err) && err.response?.data?.message) || 'Login failed';
       set({ error: message, isLoading: false });
       throw new Error(message);
     }
@@ -81,8 +89,9 @@ export const useAuthStore = create<AuthState>((set) => ({
 
       set({ user, isAuthenticated: true, isLoading: false });
       return response.data;
-    } catch (err: any) {
-      const message = err.response?.data?.message || 'Registration failed';
+    } catch (err) {
+      const message =
+        (axios.isAxiosError(err) && err.response?.data?.message) || 'Registration failed';
       set({ error: message, isLoading: false });
       throw new Error(message);
     }

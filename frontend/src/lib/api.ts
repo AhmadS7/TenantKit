@@ -38,9 +38,14 @@ api.interceptors.request.use(
 
 // Response Interceptor: Handle Token Refresh Rotation
 let isRefreshing = false;
-let failedRequestsQueue: any[] = [];
 
-const processQueue = (error: any, token: string | null = null) => {
+type QueuedRequest = {
+  resolve: (token: unknown) => void;
+  reject: (error: unknown) => void;
+};
+let failedRequestsQueue: QueuedRequest[] = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
   failedRequestsQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);

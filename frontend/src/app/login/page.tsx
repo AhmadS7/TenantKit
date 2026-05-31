@@ -24,14 +24,20 @@ function LoginForm() {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
       const parts = hostname.split('.');
-      
-      // If we have a subdomain (not www and host length >= 2)
-      if (parts.length >= 2 && parts[0] !== 'www' && (parts[1] === 'localhost' || parts[1] === 'tenantkit')) {
+
+      // Detect tenant subdomain on the client after mount. Reading window during
+      // render would diverge from the server-rendered HTML and break hydration,
+      // so the state sync must live in an effect.
+      const onSubdomain =
+        parts.length >= 2 && parts[0] !== 'www' && (parts[1] === 'localhost' || parts[1] === 'tenantkit');
+      /* eslint-disable react-hooks/set-state-in-effect */
+      if (onSubdomain) {
         setSubdomain(parts[0]);
         setIsGlobal(false);
       } else {
         setIsGlobal(true);
       }
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, []);
 
@@ -70,8 +76,8 @@ function LoginForm() {
     try {
       await login(email, password);
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Login failed.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed.');
     }
   };
 
@@ -189,7 +195,7 @@ function LoginForm() {
 
         {/* Links */}
         <div className="mt-8 text-center text-sm text-slate-500">
-          Don't have a workspace?{' '}
+          Don&apos;t have a workspace?{' '}
           <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-semibold">
             Create one now
           </Link>

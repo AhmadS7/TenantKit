@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth';
+import axios from 'axios';
 import { api } from '@/lib/api';
 import { 
   Shield, 
@@ -12,7 +13,6 @@ import {
   Activity, 
   Check,
   Building,
-  CheckCircle,
   Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
@@ -49,8 +49,10 @@ export default function Billing() {
       if (url) {
         window.location.href = url;
       }
-    } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || `Checkout failed for ${plan} plan.`);
+    } catch (err) {
+      const message =
+        (axios.isAxiosError(err) && err.response?.data?.message) || `Checkout failed for ${plan} plan.`;
+      setErrorMsg(message);
       setCheckoutLoading(null);
     }
   };

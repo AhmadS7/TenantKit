@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
-import { Shield, CreditCard, Activity, Database, ArrowRight, Server } from 'lucide-react';
+import { Shield, CreditCard, Database, ArrowRight, Server } from 'lucide-react';
 
 export default function Home() {
   const { isAuthenticated, user } = useAuthStore();

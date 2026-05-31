@@ -8,15 +8,21 @@ import { api } from '@/lib/api';
 import { 
   Shield, 
   Users, 
-  CreditCard, 
-  Settings, 
-  LogOut, 
+  CreditCard,
+  LogOut,
   Activity, 
   CheckCircle,
   Database,
   Building
 } from 'lucide-react';
 import Link from 'next/link';
+
+interface Member {
+  membershipId: string;
+  email: string;
+  role: string;
+  joinedAt: string;
+}
 
 export default function Dashboard() {
   const router = useRouter();
@@ -199,7 +205,7 @@ export default function Dashboard() {
           </h3>
           <p className="text-slate-400 text-sm leading-relaxed">
             The membership list below was retrieved from a simple query: <code className="bg-white/5 px-1.5 py-0.5 rounded text-indigo-300">SELECT * FROM memberships</code>. 
-            Because PostgreSQL RLS is active on this session, PostgreSQL automatically isolated the records to <code className="bg-white/5 px-1.5 py-0.5 rounded text-indigo-300">tenant_id = '{tenant?.id}'</code>. 
+            Because PostgreSQL RLS is active on this session, PostgreSQL automatically isolated the records to <code className="bg-white/5 px-1.5 py-0.5 rounded text-indigo-300">tenant_id = &apos;{tenant?.id}&apos;</code>.
             Attempts by other tenant sessions to inspect this workspace will result in zero rows returned.
           </p>
         </section>
@@ -222,7 +228,7 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-slate-300">
-                {members.map((m: any) => (
+                {members.map((m: Member) => (
                   <tr key={m.membershipId} className="hover:bg-white/[0.01] transition-all-300">
                     <td className="p-4 pl-6 font-medium text-white">{m.email}</td>
                     <td className="p-4">

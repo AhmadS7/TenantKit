@@ -17,8 +17,8 @@ describe('BillingController (e2e)', () => {
     })
       .overrideProvider('REDIS_CLIENT')
       .useValue({
-        ping: async () => 'PONG',
-        quit: async () => {},
+        ping: () => Promise.resolve('PONG'),
+        quit: () => Promise.resolve(),
       })
       .compile();
 
@@ -34,7 +34,9 @@ describe('BillingController (e2e)', () => {
   });
 
   beforeEach(async () => {
-    await dataSource.query('TRUNCATE TABLE memberships, users, tenants, refresh_tokens CASCADE;');
+    await dataSource.query(
+      'TRUNCATE TABLE memberships, users, tenants, refresh_tokens CASCADE;',
+    );
     await dataSource.query(`
       INSERT INTO tenants (id, slug, name, "customDomain", "planTier", "subscriptionStatus")
       VALUES ('123e4567-e89b-12d3-a456-426614174000', 'billing-tenant', 'Billing Tenant', null, 'free', 'active');
@@ -56,7 +58,10 @@ describe('BillingController (e2e)', () => {
   });
 
   it('/v1/billing/checkout (POST) - Success creating mock checkout session', () => {
-    const token = jwtService.sign({ sub: '223e4567-e89b-12d3-a456-426614174000', email: 'billing@test.com' });
+    const token = jwtService.sign({
+      sub: '223e4567-e89b-12d3-a456-426614174000',
+      email: 'billing@test.com',
+    });
     return request(app.getHttpServer())
       .post('/v1/billing/checkout')
       .set('Host', 'billing-tenant.localhost')
@@ -64,7 +69,8 @@ describe('BillingController (e2e)', () => {
       .send({ plan: 'pro' })
       .expect(201)
       .then((res) => {
-        expect(res.body.url).toContain('checkout_success=true');
+        const body = res.body as { url?: string };
+        expect(body.url).toContain('checkout_success=true');
       });
   });
 

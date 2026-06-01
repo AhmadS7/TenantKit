@@ -26,18 +26,36 @@ export class FixRlsPolicies1735774400000 implements MigrationInterface {
 
     // 3. Ensure RLS is enabled
     await queryRunner.query(`ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;`);
-    await queryRunner.query(`ALTER TABLE memberships ENABLE ROW LEVEL SECURITY;`);
+    await queryRunner.query(
+      `ALTER TABLE memberships ENABLE ROW LEVEL SECURITY;`,
+    );
     await queryRunner.query(`ALTER TABLE users ENABLE ROW LEVEL SECURITY;`);
 
     // 4. Drop broken policies if they exist (old names and new names to avoid conflicts)
-    await queryRunner.query(`DROP POLICY IF EXISTS users_access_policy ON users;`);
-    await queryRunner.query(`DROP POLICY IF EXISTS tenants_access_policy ON tenants;`);
-    await queryRunner.query(`DROP POLICY IF EXISTS memberships_access_policy ON memberships;`);
-    await queryRunner.query(`DROP POLICY IF EXISTS tenants_isolation_policy ON tenants;`);
-    await queryRunner.query(`DROP POLICY IF EXISTS memberships_tenant_isolation_policy ON memberships;`);
-    await queryRunner.query(`DROP POLICY IF EXISTS users_isolation_policy ON users;`);
-    await queryRunner.query(`DROP POLICY IF EXISTS tenant_isolation ON tenants;`);
-    await queryRunner.query(`DROP POLICY IF EXISTS membership_isolation ON memberships;`);
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS users_access_policy ON users;`,
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS tenants_access_policy ON tenants;`,
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS memberships_access_policy ON memberships;`,
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS tenants_isolation_policy ON tenants;`,
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS memberships_tenant_isolation_policy ON memberships;`,
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS users_isolation_policy ON users;`,
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS tenant_isolation ON tenants;`,
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS membership_isolation ON memberships;`,
+    );
     await queryRunner.query(`DROP POLICY IF EXISTS user_isolation ON users;`);
 
     // 5. Create Tenants isolation policy: see only your own
@@ -71,17 +89,21 @@ export class FixRlsPolicies1735774400000 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop the new policies
-    await queryRunner.query(`DROP POLICY IF EXISTS tenant_isolation ON tenants;`);
-    await queryRunner.query(`DROP POLICY IF EXISTS membership_isolation ON memberships;`);
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS tenant_isolation ON tenants;`,
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS membership_isolation ON memberships;`,
+    );
     await queryRunner.query(`DROP POLICY IF EXISTS user_isolation ON users;`);
-    
+
     // Re-create the original (broken) policies for rollback purposes
     await queryRunner.query(`
       CREATE POLICY tenants_isolation_policy ON tenants
           FOR ALL
           USING (id = current_setting('app.current_tenant')::uuid);
     `);
-    
+
     await queryRunner.query(`
       CREATE POLICY users_access_policy ON users
           FOR ALL

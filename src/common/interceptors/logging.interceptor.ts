@@ -1,4 +1,10 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+  Logger,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Request, Response } from 'express';
@@ -8,12 +14,16 @@ import { randomUUID } from 'crypto';
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(LoggingInterceptor.name);
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const ctx = context.switchToHttp();
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
 
-    const correlationId = request.headers['x-correlation-id'] || randomUUID();
+    const correlationHeader = request.headers['x-correlation-id'];
+    const correlationId =
+      (Array.isArray(correlationHeader)
+        ? correlationHeader[0]
+        : correlationHeader) || randomUUID();
     request.headers['x-correlation-id'] = correlationId;
 
     const { method, url } = request;
@@ -31,7 +41,7 @@ export class LoggingInterceptor implements NestInterceptor {
         const delay = Date.now() - now;
         const statusCode = response.statusCode;
         const redactedResponse = this.redact(data);
-        
+
         this.logger.log(
           `[${correlationId}] Outgoing response: ${method} ${url} | Status: ${statusCode} | Duration: ${delay}ms | Response: ${JSON.stringify(redactedResponse)}`,
         );
@@ -39,9 +49,12 @@ export class LoggingInterceptor implements NestInterceptor {
     );
   }
 
-  private redact(obj: any): any {
-    if (!obj || typeof obj !== 'object') {
-      return obj;
+  private redact(value: unknown): unknown {
+    if (Array.isArray(value)) {
+      return value.map((item) => this.redact(item));
+    }
+    if (!value || typeof value !== 'object') {
+      return value;
     }
 
     const sensitiveFields = [
@@ -56,13 +69,20 @@ export class LoggingInterceptor implements NestInterceptor {
       'secret',
     ];
 
-    const copy = Array.isArray(obj) ? [...obj] : { ...obj };
+    const source = value as Record<string, unknown>;
+    const copy: Record<string, unknown> = {};
 
-    for (const key of Object.keys(copy)) {
-      if (typeof copy[key] === 'object' && copy[key] !== null) {
-        copy[key] = this.redact(copy[key]);
-      } else if (sensitiveFields.includes(key.toLowerCase()) || sensitiveFields.some(s => key.toLowerCase().includes(s.toLowerCase()))) {
+    for (const key of Object.keys(source)) {
+      const current = source[key];
+      if (current && typeof current === 'object') {
+        copy[key] = this.redact(current);
+      } else if (
+        sensitiveFields.includes(key.toLowerCase()) ||
+        sensitiveFields.some((s) => key.toLowerCase().includes(s.toLowerCase()))
+      ) {
         copy[key] = '[REDACTED]';
+      } else {
+        copy[key] = current;
       }
     }
 

@@ -1,14 +1,32 @@
-import { Injectable, BadRequestException, Logger, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  Logger,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Tenant } from '../tenancy/tenant.entity';
 import { getTenantManager } from '../tenancy/tenant-context';
 import Stripe from 'stripe';
 
+/**
+ * Minimal shape of the Stripe objects carried on the webhook events we handle.
+ * The SDK's `event.data.object` is a broad discriminated union; we read only a
+ * handful of fields, so we narrow through this local view at the point of use.
+ */
+interface StripeWebhookObject {
+  id?: string;
+  status?: string;
+  customer?: string | null;
+  subscription?: string | null;
+  metadata?: { tenantId?: string; plan?: string } | null;
+}
+
 @Injectable()
 export class BillingService {
   private readonly logger = new Logger(BillingService.name);
-  private stripe: any = null;
+  private stripe: Stripe.Stripe | null = null;
 
   constructor(
     @InjectDataSource()
@@ -17,11 +35,15 @@ export class BillingService {
     const apiKey = process.env.STRIPE_API_KEY;
     if (apiKey && apiKey !== 'change_me') {
       this.stripe = new Stripe(apiKey, {
-        apiVersion: '2025-02-18' as any, // Premium pin API version
-      });
+        // Pin the API version. Cast via the constructor's config parameter
+        // because this pinned literal is not part of the SDK's ApiVersion union.
+        apiVersion: '2025-02-18',
+      } as unknown as ConstructorParameters<typeof Stripe>[1]);
       this.logger.log('Stripe client initialized successfully.');
     } else {
-      this.logger.warn('Stripe API Key is not set or using placeholder. Running in Mock Sandbox Mode.');
+      this.logger.warn(
+        'Stripe API Key is not set or using placeholder. Running in Mock Sandbox Mode.',
+      );
     }
   }
 
@@ -36,7 +58,11 @@ export class BillingService {
     return getTenantManager(this.dataSource.manager).getRepository(Tenant);
   }
 
-  async createCheckoutSession(tenantId: string, plan: string, host: string): Promise<{ url: string }> {
+  async createCheckoutSession(
+    tenantId: string,
+    plan: string,
+    host: string,
+  ): Promise<{ url: string }> {
     const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
     if (!tenant) {
       throw new BadRequestException('Tenant not found');
@@ -54,8 +80,10 @@ export class BillingService {
 
     // 1. Mock Sandbox Mode
     if (!this.stripe) {
-      this.logger.log(`[Mock Stripe] Creating checkout session for Tenant: ${tenant.slug}, Plan: ${cleanPlan}`);
-      
+      this.logger.log(
+        `[Mock Stripe] Creating checkout session for Tenant: ${tenant.slug}, Plan: ${cleanPlan}`,
+      );
+
       // Update tenant status to active subscription after a small delay simulation or directly for local tests
       tenant.planTier = cleanPlan;
       tenant.subscriptionStatus = 'active';
@@ -82,9 +110,10 @@ export class BillingService {
       }
 
       // Map plans to test price IDs from environment
-      const priceId = cleanPlan === 'pro' 
-        ? (process.env.STRIPE_PRO_PRICE_ID || 'price_mock_pro')
-        : (process.env.STRIPE_ENT_PRICE_ID || 'price_mock_enterprise');
+      const priceId =
+        cleanPlan === 'pro'
+          ? process.env.STRIPE_PRO_PRICE_ID || 'price_mock_pro'
+          : process.env.STRIPE_ENT_PRICE_ID || 'price_mock_enterprise';
 
       const session = await this.stripe.checkout.sessions.create({
         customer: stripeCustomerId,
@@ -105,9 +134,10 @@ export class BillingService {
       });
 
       return { url: session.url || successUrl };
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
       this.logger.error('Stripe Checkout Error:', err);
-      throw new BadRequestException(`Stripe error: ${err.message}`);
+      throw new BadRequestException(`Stripe error: ${message}`);
     }
   }
 
@@ -115,30 +145,39 @@ export class BillingService {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!this.stripe || !webhookSecret) {
-      this.logger.warn('Stripe or Stripe Webhook Secret is not configured. Webhook ignored.');
+      this.logger.warn(
+        'Stripe or Stripe Webhook Secret is not configured. Webhook ignored.',
+      );
       return;
     }
 
-    let event: any;
+    let event: ReturnType<Stripe.Stripe['webhooks']['constructEvent']>;
 
     try {
-      event = this.stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
-    } catch (err: any) {
-      this.logger.error(`Webhook signature verification failed: ${err.message}`);
-      throw new ForbiddenException(`Webhook signature verification failed: ${err.message}`);
+      event = this.stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        webhookSecret,
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Webhook signature verification failed: ${message}`);
+      throw new ForbiddenException(
+        `Webhook signature verification failed: ${message}`,
+      );
     }
 
     this.logger.log(`Received Stripe Webhook event: ${event.type}`);
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as any;
+        const session = event.data.object as unknown as StripeWebhookObject;
         const tenantId = session.metadata?.tenantId;
         const plan = session.metadata?.plan || 'pro';
-        
+
         if (tenantId) {
           await this.updateTenantSubscription(tenantId, {
-            stripeSubscriptionId: session.subscription as string,
+            stripeSubscriptionId: session.subscription,
             planTier: plan,
             subscriptionStatus: 'active',
           });
@@ -146,7 +185,8 @@ export class BillingService {
         break;
       }
       case 'customer.subscription.updated': {
-        const subscription = event.data.object as any;
+        const subscription = event.data
+          .object as unknown as StripeWebhookObject;
         // Lookup tenant by Stripe customer ID
         const tenant = await this.tenantRepo.findOne({
           where: { stripeCustomerId: subscription.customer as string },
@@ -161,7 +201,8 @@ export class BillingService {
         break;
       }
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object as any;
+        const subscription = event.data
+          .object as unknown as StripeWebhookObject;
         const tenant = await this.tenantRepo.findOne({
           where: { stripeCustomerId: subscription.customer as string },
         });
@@ -184,7 +225,9 @@ export class BillingService {
     tenantId: string,
     update: Partial<Tenant>,
   ): Promise<void> {
-    this.logger.log(`Updating subscription for Tenant ${tenantId}: ${JSON.stringify(update)}`);
+    this.logger.log(
+      `Updating subscription for Tenant ${tenantId}: ${JSON.stringify(update)}`,
+    );
     await this.tenantRepo.update(tenantId, update);
   }
 
@@ -197,8 +240,9 @@ export class BillingService {
       // Perform a minimal check, e.g., retrieve the customer list with limit 1
       await this.stripe.customers.list({ limit: 1 });
       return true;
-    } catch (err: any) {
-      this.logger.warn(`Stripe API health check failed: ${err.message}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Stripe API health check failed: ${message}`);
       return false;
     }
   }

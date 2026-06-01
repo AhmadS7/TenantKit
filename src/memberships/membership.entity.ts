@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  Index,
+} from 'typeorm';
 import { User } from '../users/user.entity';
 import { Tenant } from '../tenancy/tenant.entity';
 
@@ -35,10 +43,18 @@ export class Membership {
   @JoinColumn({ name: 'tenant_id' })
   tenant: Tenant;
 
-  @Column({ type: 'enum', enum: MembershipRole, default: MembershipRole.MEMBER })
+  @Column({
+    type: 'enum',
+    enum: MembershipRole,
+    default: MembershipRole.MEMBER,
+  })
   role: MembershipRole;
 
-  @Column({ type: 'enum', enum: MembershipStatus, default: MembershipStatus.PENDING })
+  @Column({
+    type: 'enum',
+    enum: MembershipStatus,
+    default: MembershipStatus.PENDING,
+  })
   status: MembershipStatus;
 
   @Column({ type: 'uuid', nullable: true })

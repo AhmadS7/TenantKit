@@ -1,4 +1,10 @@
-import { Module, Global, Logger, OnModuleDestroy, Inject } from '@nestjs/common';
+import {
+  Module,
+  Global,
+  Logger,
+  OnModuleDestroy,
+  Inject,
+} from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
 import Redis from 'ioredis';
 
@@ -7,7 +13,7 @@ import Redis from 'ioredis';
   imports: [
     CacheModule.register({
       ttl: 60 * 1000, // 60 seconds default TTL
-      max: 100,      // maximum 100 items in memory
+      max: 100, // maximum 100 items in memory
     }),
   ],
   providers: [
@@ -17,7 +23,7 @@ import Redis from 'ioredis';
         const logger = new Logger('RedisClient');
         const host = process.env.REDIS_HOST || 'localhost';
         const port = parseInt(process.env.REDIS_PORT || '6379', 10);
-        
+
         // Setup lazyConnect and timeout settings to allow local tests to run without active Redis instance
         const client = new Redis({
           host,
@@ -28,7 +34,9 @@ import Redis from 'ioredis';
         });
 
         client.on('error', (err) => {
-          logger.warn(`Redis connection failed (caching will run in fallback mode): ${err.message}`);
+          logger.warn(
+            `Redis connection failed (caching will run in fallback mode): ${err.message}`,
+          );
         });
 
         return client;
@@ -46,7 +54,7 @@ export class RedisModule implements OnModuleDestroy {
   async onModuleDestroy() {
     try {
       await this.redis.quit();
-    } catch (err: any) {
+    } catch {
       // Ignore errors during quit
     }
   }

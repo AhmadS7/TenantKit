@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Request, Headers, UseGuards, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Request,
+  Headers,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
+import type { Request as ExpressRequest } from 'express';
 import { BillingService } from './billing.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Public } from '../common/public.decorator';
@@ -12,7 +21,7 @@ export class BillingController {
   @UseGuards(JwtAuthGuard)
   async createCheckoutSession(
     @Body('plan') plan: string,
-    @Request() req: any,
+    @Request() req: ExpressRequest,
   ) {
     const store = tenantStorage.getStore();
     const tenantId = store?.tenantId;
@@ -27,7 +36,7 @@ export class BillingController {
   @Post('webhook')
   @Public()
   async handleWebhook(
-    @Request() req: any,
+    @Request() req: ExpressRequest,
     @Headers('stripe-signature') signature: string,
   ) {
     const rawBody = req.rawBody ? req.rawBody.toString('utf-8') : '';

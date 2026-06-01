@@ -11,7 +11,7 @@ describe('TenantMiddleware', () => {
   beforeEach(() => {
     mockTenantRepository = {
       findOne: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<Repository<Tenant>>;
 
     middleware = new TenantMiddleware(mockTenantRepository);
   });
@@ -31,11 +31,14 @@ describe('TenantMiddleware', () => {
         updatedAt: new Date(),
       };
 
-      mockTenantRepository.findOne.mockImplementation(async (options: any) => {
-        if (options?.where?.customDomain === 'client.com') {
-          return mockTenant;
+      mockTenantRepository.findOne.mockImplementation((options) => {
+        const where = options?.where as
+          | { customDomain?: string; slug?: string }
+          | undefined;
+        if (where?.customDomain === 'client.com') {
+          return Promise.resolve(mockTenant);
         }
-        return null;
+        return Promise.resolve(null);
       });
 
       const mockReq = {
@@ -48,6 +51,7 @@ describe('TenantMiddleware', () => {
 
       await middleware.use(mockReq as any, mockRes as any, mockNext);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- jest mock fn does not rely on `this`
       expect(mockTenantRepository.findOne).toHaveBeenCalledWith({
         where: { customDomain: 'client.com' },
       });
@@ -76,11 +80,14 @@ describe('TenantMiddleware', () => {
         updatedAt: new Date(),
       };
 
-      mockTenantRepository.findOne.mockImplementation(async (options: any) => {
-        if (options?.where?.slug === 'my-tenant') {
-          return mockTenant;
+      mockTenantRepository.findOne.mockImplementation((options) => {
+        const where = options?.where as
+          | { customDomain?: string; slug?: string }
+          | undefined;
+        if (where?.slug === 'my-tenant') {
+          return Promise.resolve(mockTenant);
         }
-        return null;
+        return Promise.resolve(null);
       });
 
       const mockReq = {
@@ -93,6 +100,7 @@ describe('TenantMiddleware', () => {
 
       await middleware.use(mockReq as any, mockRes as any, mockNext);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- jest mock fn does not rely on `this`
       expect(mockTenantRepository.findOne).toHaveBeenCalledWith({
         where: { slug: 'my-tenant' },
       });
@@ -121,11 +129,14 @@ describe('TenantMiddleware', () => {
         updatedAt: new Date(),
       };
 
-      mockTenantRepository.findOne.mockImplementation(async (options: any) => {
-        if (options?.where?.slug === 'dev-tenant') {
-          return mockTenant;
+      mockTenantRepository.findOne.mockImplementation((options) => {
+        const where = options?.where as
+          | { customDomain?: string; slug?: string }
+          | undefined;
+        if (where?.slug === 'dev-tenant') {
+          return Promise.resolve(mockTenant);
         }
-        return null;
+        return Promise.resolve(null);
       });
 
       const mockReq = {
@@ -136,6 +147,7 @@ describe('TenantMiddleware', () => {
 
       await middleware.use(mockReq as any, mockRes as any, mockNext);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- jest mock fn does not rely on `this`
       expect(mockTenantRepository.findOne).toHaveBeenCalledWith({
         where: { slug: 'dev-tenant' },
       });

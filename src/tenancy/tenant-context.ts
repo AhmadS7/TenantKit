@@ -5,7 +5,7 @@ export interface TenantContext {
   tenantId: string;
   tenantSlug: string;
   tenantName: string;
-  userId?: string;     // Set after auth
+  userId?: string; // Set after auth
   manager?: EntityManager; // RLS-scoped EntityManager for the active request transaction
 }
 

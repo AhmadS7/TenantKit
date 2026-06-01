@@ -1,6 +1,6 @@
 import { TenantMiddleware } from '../tenancy/tenant.middleware';
 import { Tenant } from '../tenancy/tenant.entity';
-import { Repository } from 'typeorm';
+import { FindOneOptions, Repository } from 'typeorm';
 import { tenantStorage } from '../tenancy/tenant-context';
 import { NotFoundException } from '@nestjs/common';
 
@@ -11,7 +11,7 @@ describe('TenantMiddleware', () => {
   beforeEach(() => {
     mockTenantRepository = {
       findOne: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<Repository<Tenant>>;
 
     middleware = new TenantMiddleware(mockTenantRepository);
   });
@@ -31,12 +31,17 @@ describe('TenantMiddleware', () => {
         updatedAt: new Date(),
       };
 
-      mockTenantRepository.findOne.mockImplementation(async (options: any) => {
-        if (options?.where?.customDomain === 'client.com') {
-          return mockTenant;
-        }
-        return null;
-      });
+      mockTenantRepository.findOne.mockImplementation(
+        (options: FindOneOptions<Tenant>) => {
+          const where = options?.where as
+            | { customDomain?: string; slug?: string }
+            | undefined;
+          if (where?.customDomain === 'client.com') {
+            return Promise.resolve(mockTenant);
+          }
+          return Promise.resolve(null);
+        },
+      );
 
       const mockReq = {
         headers: { host: 'client.com' },
@@ -48,6 +53,7 @@ describe('TenantMiddleware', () => {
 
       await middleware.use(mockReq as any, mockRes as any, mockNext);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- jest mock fn, not bound to `this`
       expect(mockTenantRepository.findOne).toHaveBeenCalledWith({
         where: { customDomain: 'client.com' },
       });
@@ -76,12 +82,17 @@ describe('TenantMiddleware', () => {
         updatedAt: new Date(),
       };
 
-      mockTenantRepository.findOne.mockImplementation(async (options: any) => {
-        if (options?.where?.slug === 'my-tenant') {
-          return mockTenant;
-        }
-        return null;
-      });
+      mockTenantRepository.findOne.mockImplementation(
+        (options: FindOneOptions<Tenant>) => {
+          const where = options?.where as
+            | { customDomain?: string; slug?: string }
+            | undefined;
+          if (where?.slug === 'my-tenant') {
+            return Promise.resolve(mockTenant);
+          }
+          return Promise.resolve(null);
+        },
+      );
 
       const mockReq = {
         headers: { host: 'my-tenant.tenantkit.app' },
@@ -93,6 +104,7 @@ describe('TenantMiddleware', () => {
 
       await middleware.use(mockReq as any, mockRes as any, mockNext);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- jest mock fn, not bound to `this`
       expect(mockTenantRepository.findOne).toHaveBeenCalledWith({
         where: { slug: 'my-tenant' },
       });
@@ -121,12 +133,17 @@ describe('TenantMiddleware', () => {
         updatedAt: new Date(),
       };
 
-      mockTenantRepository.findOne.mockImplementation(async (options: any) => {
-        if (options?.where?.slug === 'dev-tenant') {
-          return mockTenant;
-        }
-        return null;
-      });
+      mockTenantRepository.findOne.mockImplementation(
+        (options: FindOneOptions<Tenant>) => {
+          const where = options?.where as
+            | { customDomain?: string; slug?: string }
+            | undefined;
+          if (where?.slug === 'dev-tenant') {
+            return Promise.resolve(mockTenant);
+          }
+          return Promise.resolve(null);
+        },
+      );
 
       const mockReq = {
         headers: { host: 'dev-tenant.localhost:3000' },
@@ -136,6 +153,7 @@ describe('TenantMiddleware', () => {
 
       await middleware.use(mockReq as any, mockRes as any, mockNext);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method -- jest mock fn, not bound to `this`
       expect(mockTenantRepository.findOne).toHaveBeenCalledWith({
         where: { slug: 'dev-tenant' },
       });

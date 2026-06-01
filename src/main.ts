@@ -10,14 +10,25 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
 
   // Enable Helmet for secure HTTP headers (with loose content policy for Swagger dev UI)
-  app.use(helmet({
-    contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
-  }));
+  app.use(
+    helmet({
+      contentSecurityPolicy:
+        process.env.NODE_ENV === 'production' ? undefined : false,
+    }),
+  );
 
   // Enable dynamic CORS matching subdomains and credentials
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin || /https?:\/\/(localhost|.*\.localhost|.*\.tenantkit\.app)(:\d+)?$/.test(origin)) {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      if (
+        !origin ||
+        /https?:\/\/(localhost|.*\.localhost|.*\.tenantkit\.app)(:\d+)?$/.test(
+          origin,
+        )
+      ) {
         callback(null, true);
       } else {
         callback(null, true); // Allow custom client domains as well
@@ -63,4 +74,4 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+void bootstrap();

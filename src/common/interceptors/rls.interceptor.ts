@@ -36,7 +36,10 @@ export class RlsInterceptor implements NestInterceptor {
     private readonly dataSource: DataSource,
   ) {}
 
-  async intercept(_context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
+  async intercept(
+    _context: ExecutionContext,
+    next: CallHandler,
+  ): Promise<Observable<unknown>> {
     const store = tenantStorage.getStore();
 
     // Skip when there is no tenant context (auth/resolution/webhook/health
@@ -54,9 +57,15 @@ export class RlsInterceptor implements NestInterceptor {
     await queryRunner.startTransaction();
 
     try {
-      await queryRunner.query(`SELECT set_config('app.current_tenant', $1, true)`, [store.tenantId]);
+      await queryRunner.query(
+        `SELECT set_config('app.current_tenant', $1, true)`,
+        [store.tenantId],
+      );
       if (store.userId) {
-        await queryRunner.query(`SELECT set_config('app.current_user', $1, true)`, [store.userId]);
+        await queryRunner.query(
+          `SELECT set_config('app.current_user', $1, true)`,
+          [store.userId],
+        );
       }
       // Identifier cannot be parameterized; resolveTenantRole validates the value.
       await queryRunner.query(`SET LOCAL ROLE "${role}"`);
@@ -71,7 +80,7 @@ export class RlsInterceptor implements NestInterceptor {
     return from(
       (async () => {
         try {
-          const result = await lastValueFrom(next.handle());
+          const result: unknown = await lastValueFrom(next.handle());
           await queryRunner.commitTransaction();
           return result;
         } catch (err) {
@@ -95,7 +104,9 @@ export class RlsInterceptor implements NestInterceptor {
   private resolveTenantRole(): string {
     const role = process.env.DB_TENANT_ROLE || 'tenantkit_app';
     if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(role)) {
-      throw new InternalServerErrorException('Invalid DB_TENANT_ROLE configuration');
+      throw new InternalServerErrorException(
+        'Invalid DB_TENANT_ROLE configuration',
+      );
     }
     return role;
   }

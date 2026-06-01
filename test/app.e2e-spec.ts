@@ -6,6 +6,21 @@ import { AppModule } from './../src/app.module';
 import { DataSource } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 
+interface DashboardBody {
+  tenant?: { name?: string };
+  memberCount?: number;
+  members?: { email?: string }[];
+}
+
+interface HealthBody {
+  status?: string;
+  info?: {
+    database?: { status?: string };
+    redis?: { status?: string };
+    stripe?: { status?: string };
+  };
+}
+
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
   let dataSource: DataSource;
@@ -17,8 +32,8 @@ describe('AppController (e2e)', () => {
     })
       .overrideProvider('REDIS_CLIENT')
       .useValue({
-        ping: async () => 'PONG',
-        quit: async () => {},
+        ping: () => Promise.resolve('PONG'),
+        quit: () => Promise.resolve(),
       })
       .compile();
 
@@ -35,7 +50,9 @@ describe('AppController (e2e)', () => {
 
   beforeEach(async () => {
     // Clear and seed test tenant database state
-    await dataSource.query('TRUNCATE TABLE memberships, users, tenants, refresh_tokens CASCADE;');
+    await dataSource.query(
+      'TRUNCATE TABLE memberships, users, tenants, refresh_tokens CASCADE;',
+    );
     await dataSource.query(`
       INSERT INTO tenants (id, slug, name, "customDomain", "planTier", "subscriptionStatus")
       VALUES ('123e4567-e89b-12d3-a456-426614174000', 'test-tenant', 'Test Tenant', 'client.com', 'free', 'active');
@@ -57,33 +74,44 @@ describe('AppController (e2e)', () => {
   });
 
   it('/v1/dashboard/summary (GET) - Success with valid subdomain and auth', () => {
-    const token = jwtService.sign({ sub: '223e4567-e89b-12d3-a456-426614174000', email: 'user@test.com' });
+    const token = jwtService.sign({
+      sub: '223e4567-e89b-12d3-a456-426614174000',
+      email: 'user@test.com',
+    });
     return request(app.getHttpServer())
       .get('/v1/dashboard/summary')
       .set('Host', 'test-tenant.localhost')
       .set('Authorization', `Bearer ${token}`)
       .expect(200)
       .then((res) => {
-        expect(res.body.tenant.name).toBe('Test Tenant');
-        expect(res.body.memberCount).toBe(1);
-        expect(res.body.members[0].email).toBe('user@test.com');
+        const body = res.body as DashboardBody;
+        expect(body.tenant?.name).toBe('Test Tenant');
+        expect(body.memberCount).toBe(1);
+        expect(body.members?.[0].email).toBe('user@test.com');
       });
   });
 
   it('/v1/dashboard/summary (GET) - Success with valid custom domain and auth', () => {
-    const token = jwtService.sign({ sub: '223e4567-e89b-12d3-a456-426614174000', email: 'user@test.com' });
+    const token = jwtService.sign({
+      sub: '223e4567-e89b-12d3-a456-426614174000',
+      email: 'user@test.com',
+    });
     return request(app.getHttpServer())
       .get('/v1/dashboard/summary')
       .set('Host', 'client.com')
       .set('Authorization', `Bearer ${token}`)
       .expect(200)
       .then((res) => {
-        expect(res.body.tenant.name).toBe('Test Tenant');
+        const body = res.body as DashboardBody;
+        expect(body.tenant?.name).toBe('Test Tenant');
       });
   });
 
   it('/v1/dashboard/summary (GET) - Failure 404 with missing tenant context', () => {
-    const token = jwtService.sign({ sub: '223e4567-e89b-12d3-a456-426614174000', email: 'user@test.com' });
+    const token = jwtService.sign({
+      sub: '223e4567-e89b-12d3-a456-426614174000',
+      email: 'user@test.com',
+    });
     return request(app.getHttpServer())
       .get('/v1/dashboard/summary')
       .set('Host', 'localhost')
@@ -104,10 +132,11 @@ describe('AppController (e2e)', () => {
         .get('/v1/health')
         .expect(200)
         .then((res) => {
-          expect(res.body.status).toBe('ok');
-          expect(res.body.info.database.status).toBe('up');
-          expect(res.body.info.redis.status).toBe('up');
-          expect(res.body.info.stripe.status).toBe('up');
+          const body = res.body as HealthBody;
+          expect(body.status).toBe('ok');
+          expect(body.info?.database?.status).toBe('up');
+          expect(body.info?.redis?.status).toBe('up');
+          expect(body.info?.stripe?.status).toBe('up');
         });
     });
 
@@ -116,8 +145,9 @@ describe('AppController (e2e)', () => {
         .get('/v1/health/db')
         .expect(200)
         .then((res) => {
-          expect(res.body.status).toBe('ok');
-          expect(res.body.info.database.status).toBe('up');
+          const body = res.body as HealthBody;
+          expect(body.status).toBe('ok');
+          expect(body.info?.database?.status).toBe('up');
         });
     });
 
@@ -126,8 +156,9 @@ describe('AppController (e2e)', () => {
         .get('/v1/health/redis')
         .expect(200)
         .then((res) => {
-          expect(res.body.status).toBe('ok');
-          expect(res.body.info.redis.status).toBe('up');
+          const body = res.body as HealthBody;
+          expect(body.status).toBe('ok');
+          expect(body.info?.redis?.status).toBe('up');
         });
     });
 
@@ -136,8 +167,9 @@ describe('AppController (e2e)', () => {
         .get('/v1/health/stripe')
         .expect(200)
         .then((res) => {
-          expect(res.body.status).toBe('ok');
-          expect(res.body.info.stripe.status).toBe('up');
+          const body = res.body as HealthBody;
+          expect(body.status).toBe('ok');
+          expect(body.info?.stripe?.status).toBe('up');
         });
     });
   });

@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -6,9 +11,14 @@ import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { User } from '../users/user.entity';
 import { Tenant } from '../tenancy/tenant.entity';
-import { Membership, MembershipRole, MembershipStatus } from '../memberships/membership.entity';
+import {
+  Membership,
+  MembershipRole,
+  MembershipStatus,
+} from '../memberships/membership.entity';
 import { RefreshToken } from './refresh-token.entity';
 import { RegisterDto } from './dto/register.dto';
+import type { AuthUser } from '../types/express';
 
 @Injectable()
 export class AuthService {
@@ -29,9 +39,11 @@ export class AuthService {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
-  async validateUser(email: string, pass: string): Promise<any> {
-    const user = await this.userRepo.findOne({ where: { email: email.toLowerCase() } });
-    if (user && await bcrypt.compare(pass, user.passwordHash)) {
+  async validateUser(email: string, pass: string): Promise<AuthUser | null> {
+    const user = await this.userRepo.findOne({
+      where: { email: email.toLowerCase() },
+    });
+    if (user && (await bcrypt.compare(pass, user.passwordHash))) {
       const { passwordHash, refreshTokenHash, ...result } = user;
       return result;
     }
@@ -40,14 +52,16 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
     const email = dto.email.toLowerCase();
-    
+
     // Check if user or tenant slug already exists
     const existingUser = await this.userRepo.findOne({ where: { email } });
     if (existingUser) {
       throw new ConflictException('Email already registered');
     }
 
-    const existingTenant = await this.tenantRepo.findOne({ where: { slug: dto.tenantSlug.toLowerCase() } });
+    const existingTenant = await this.tenantRepo.findOne({
+      where: { slug: dto.tenantSlug.toLowerCase() },
+    });
     if (existingTenant) {
       throw new ConflictException('Tenant subdomain/slug already exists');
     }
@@ -81,20 +95,24 @@ export class AuthService {
 
       return {
         user: { id: savedUser.id, email: savedUser.email },
-        tenant: { id: savedTenant.id, slug: savedTenant.slug, name: savedTenant.name },
+        tenant: {
+          id: savedTenant.id,
+          slug: savedTenant.slug,
+          name: savedTenant.name,
+        },
       };
     });
   }
 
-  async login(user: any) {
+  async login(user: AuthUser) {
     const payload = { email: user.email, sub: user.id };
-    
+
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
-    
+
     // Generate a secure high-entropy refresh token
     const rawRefreshToken = crypto.randomBytes(40).toString('hex');
     const refreshHash = this.hashToken(rawRefreshToken);
-    
+
     // Store in DB with 7-day expiry
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
@@ -115,7 +133,9 @@ export class AuthService {
 
   async refresh(token: string) {
     const hash = this.hashToken(token);
-    const storedToken = await this.refreshTokenRepo.findOne({ where: { tokenHash: hash } });
+    const storedToken = await this.refreshTokenRepo.findOne({
+      where: { tokenHash: hash },
+    });
 
     if (!storedToken) {
       throw new UnauthorizedException('Invalid session');
@@ -130,9 +150,11 @@ export class AuthService {
       // Revoke all tokens for this user instantly
       await this.refreshTokenRepo.update(
         { userId: storedToken.userId },
-        { isRevoked: true }
+        { isRevoked: true },
       );
-      throw new UnauthorizedException('Session reuse detected. Access revoked.');
+      throw new UnauthorizedException(
+        'Session reuse detected. Access revoked.',
+      );
     }
 
     if (new Date() > storedToken.expiresAt) {
@@ -144,7 +166,9 @@ export class AuthService {
     await this.refreshTokenRepo.save(storedToken);
 
     // Fetch user details
-    const user = await this.userRepo.findOne({ where: { id: storedToken.userId } });
+    const user = await this.userRepo.findOne({
+      where: { id: storedToken.userId },
+    });
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
@@ -156,11 +180,16 @@ export class AuthService {
 
   async logout(token: string) {
     const hash = this.hashToken(token);
-    await this.refreshTokenRepo.update({ tokenHash: hash }, { isRevoked: true });
+    await this.refreshTokenRepo.update(
+      { tokenHash: hash },
+      { isRevoked: true },
+    );
   }
 
   async requestPasswordReset(email: string): Promise<string> {
-    const user = await this.userRepo.findOne({ where: { email: email.toLowerCase() } });
+    const user = await this.userRepo.findOne({
+      where: { email: email.toLowerCase() },
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -172,7 +201,9 @@ export class AuthService {
 
   async resetPassword(token: string, newPass: string) {
     try {
-      const payload = this.jwtService.verify(token);
+      const payload = this.jwtService.verify<{ purpose?: string; sub: string }>(
+        token,
+      );
       if (payload.purpose !== 'password_reset') {
         throw new UnauthorizedException('Invalid reset token');
       }
@@ -184,7 +215,7 @@ export class AuthService {
 
       user.passwordHash = await bcrypt.hash(newPass, 12);
       await this.userRepo.save(user);
-    } catch (e) {
+    } catch {
       throw new UnauthorizedException('Invalid or expired reset token');
     }
   }

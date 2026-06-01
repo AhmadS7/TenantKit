@@ -10,7 +10,7 @@ describe('AppController', () => {
   beforeEach(async () => {
     mockAppService = {
       getDashboardSummary: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<AppService>;
 
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
@@ -42,7 +42,7 @@ describe('AppController', () => {
         memberCount: 1,
         members: [],
       };
-      mockAppService.getDashboardSummary.mockResolvedValue(mockResult as any);
+      mockAppService.getDashboardSummary.mockResolvedValue(mockResult);
 
       expect(await appController.getDashboardSummary()).toBe(mockResult);
     });

@@ -1,11 +1,18 @@
 import { Controller, Get, Inject } from '@nestjs/common';
-import { HealthCheckService, TypeOrmHealthIndicator, HealthCheck } from '@nestjs/terminus';
+import {
+  HealthCheckService,
+  TypeOrmHealthIndicator,
+  HealthCheck,
+} from '@nestjs/terminus';
 import Redis from 'ioredis';
 import { BillingService } from '../billing/billing.service';
 
 // terminus 11 no longer re-exports HealthIndicatorResult from the package root,
 // so we mirror its shape: a keyed entry whose status is the literal up or down.
-type IndicatorResult = Record<string, { status: 'up' | 'down' } & Record<string, unknown>>;
+type IndicatorResult = Record<
+  string,
+  { status: 'up' | 'down' } & Record<string, unknown>
+>;
 
 @Controller('health')
 export class HealthController {
@@ -46,11 +53,11 @@ export class HealthController {
   }
 
   private async checkRedis(): Promise<IndicatorResult> {
-    let isHealthy = false;
+    let isHealthy: boolean;
     try {
       await this.redis.ping();
       isHealthy = true;
-    } catch (err) {
+    } catch {
       isHealthy = false;
     }
     const status: 'up' | 'down' = isHealthy ? 'up' : 'down';
@@ -58,10 +65,10 @@ export class HealthController {
   }
 
   private async checkStripe(): Promise<IndicatorResult> {
-    let isHealthy = false;
+    let isHealthy: boolean;
     try {
       isHealthy = await this.billingService.checkStripeHealth();
-    } catch (err) {
+    } catch {
       isHealthy = false;
     }
     const status: 'up' | 'down' = isHealthy ? 'up' : 'down';

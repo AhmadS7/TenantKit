@@ -12,7 +12,7 @@ import { TENANT_REQUEST_KEY } from './constants';
     TenantMiddleware,
     {
       provide: TENANT_REQUEST_KEY,
-      useFactory: (req: any) => req.tenant,
+      useFactory: (req: { tenant?: unknown }) => req.tenant,
       inject: [REQUEST],
       scope: Scope.REQUEST,
     },

@@ -5,6 +5,14 @@ import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { DataSource } from 'typeorm';
 
+interface AuthResponseBody {
+  user?: { email?: string };
+  tenant?: { slug?: string };
+  accessToken?: string;
+  refreshToken?: string;
+  resetToken?: string;
+}
+
 describe('AuthController (e2e)', () => {
   let app: INestApplication<App>;
   let dataSource: DataSource;
@@ -15,8 +23,8 @@ describe('AuthController (e2e)', () => {
     })
       .overrideProvider('REDIS_CLIENT')
       .useValue({
-        ping: async () => 'PONG',
-        quit: async () => {},
+        ping: () => Promise.resolve('PONG'),
+        quit: () => Promise.resolve(),
       })
       .compile();
 
@@ -32,7 +40,9 @@ describe('AuthController (e2e)', () => {
 
   beforeEach(async () => {
     // Clear test tables before each test case
-    await dataSource.query('TRUNCATE TABLE refresh_tokens, memberships, users, tenants CASCADE;');
+    await dataSource.query(
+      'TRUNCATE TABLE refresh_tokens, memberships, users, tenants CASCADE;',
+    );
   });
 
   afterAll(async () => {
@@ -53,10 +63,11 @@ describe('AuthController (e2e)', () => {
         })
         .expect(201);
 
-      expect(res.body.user).toBeDefined();
-      expect(res.body.user.email).toBe('owner@tenantkit.app');
-      expect(res.body.tenant).toBeDefined();
-      expect(res.body.tenant.slug).toBe('acme');
+      const body = res.body as AuthResponseBody;
+      expect(body.user).toBeDefined();
+      expect(body.user?.email).toBe('owner@tenantkit.app');
+      expect(body.tenant).toBeDefined();
+      expect(body.tenant?.slug).toBe('acme');
     });
 
     it('should block registration with duplicate email', async () => {
@@ -132,10 +143,11 @@ describe('AuthController (e2e)', () => {
         })
         .expect(200);
 
-      expect(loginRes.body.accessToken).toBeDefined();
-      expect(loginRes.body.refreshToken).toBeDefined();
+      const loginBody = loginRes.body as AuthResponseBody;
+      expect(loginBody.accessToken).toBeDefined();
+      expect(loginBody.refreshToken).toBeDefined();
 
-      const firstRefreshToken = loginRes.body.refreshToken;
+      const firstRefreshToken = loginBody.refreshToken;
 
       // 2. Refresh (rotates token)
       const refreshRes1 = await request(app.getHttpServer())
@@ -143,11 +155,12 @@ describe('AuthController (e2e)', () => {
         .send({ refreshToken: firstRefreshToken })
         .expect(200);
 
-      expect(refreshRes1.body.accessToken).toBeDefined();
-      expect(refreshRes1.body.refreshToken).toBeDefined();
-      expect(refreshRes1.body.refreshToken).not.toBe(firstRefreshToken);
+      const refreshBody1 = refreshRes1.body as AuthResponseBody;
+      expect(refreshBody1.accessToken).toBeDefined();
+      expect(refreshBody1.refreshToken).toBeDefined();
+      expect(refreshBody1.refreshToken).not.toBe(firstRefreshToken);
 
-      const secondRefreshToken = refreshRes1.body.refreshToken;
+      const secondRefreshToken = refreshBody1.refreshToken;
 
       // 3. Reusing the first refresh token should fail (Reuse Detection)
       await request(app.getHttpServer())
@@ -171,7 +184,7 @@ describe('AuthController (e2e)', () => {
         })
         .expect(200);
 
-      const refreshToken = loginRes.body.refreshToken;
+      const refreshToken = (loginRes.body as AuthResponseBody).refreshToken;
 
       // Logout
       await request(app.getHttpServer())
@@ -207,8 +220,9 @@ describe('AuthController (e2e)', () => {
         .send({ email: 'recover@tenantkit.app' })
         .expect(200);
 
-      expect(reqRes.body.resetToken).toBeDefined();
-      const resetToken = reqRes.body.resetToken;
+      const reqBody = reqRes.body as AuthResponseBody;
+      expect(reqBody.resetToken).toBeDefined();
+      const resetToken = reqBody.resetToken;
 
       // 2. Perform reset password
       await request(app.getHttpServer())
@@ -237,7 +251,7 @@ describe('AuthController (e2e)', () => {
         })
         .expect(200);
 
-      expect(newLoginRes.body.accessToken).toBeDefined();
+      expect((newLoginRes.body as AuthResponseBody).accessToken).toBeDefined();
     });
   });
 });

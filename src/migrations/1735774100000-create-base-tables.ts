@@ -54,7 +54,9 @@ export class CreateBaseTables1735774100000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_memberships_user_tenant;`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_memberships_user_tenant;`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS memberships;`);
     await queryRunner.query(`DROP TABLE IF EXISTS users;`);
     await queryRunner.query(`DROP TABLE IF EXISTS tenants;`);

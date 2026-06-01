@@ -1,4 +1,10 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength, Matches } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  MinLength,
+  Matches,
+} from 'class-validator';
 
 export class RegisterDto {
   @IsEmail()
@@ -15,7 +21,8 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   @Matches(/^[a-z0-9-]+$/, {
-    message: 'Tenant slug can only contain lowercase letters, numbers, and hyphens.',
+    message:
+      'Tenant slug can only contain lowercase letters, numbers, and hyphens.',
   })
   tenantSlug: string;
 }

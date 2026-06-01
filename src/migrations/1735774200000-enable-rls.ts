@@ -23,7 +23,9 @@ export class EnableRls1735774200000 implements MigrationInterface {
     `);
 
     // Enable RLS on memberships table
-    await queryRunner.query(`ALTER TABLE memberships ENABLE ROW LEVEL SECURITY;`);
+    await queryRunner.query(
+      `ALTER TABLE memberships ENABLE ROW LEVEL SECURITY;`,
+    );
 
     // Policy for memberships table: only allow access to memberships of current tenant
     await queryRunner.query(`
@@ -49,8 +51,12 @@ export class EnableRls1735774200000 implements MigrationInterface {
     `);
 
     // Grant permissions on existing tables and sequences
-    await queryRunner.query(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO tenantkit_app;`);
-    await queryRunner.query(`GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO tenantkit_app;`);
+    await queryRunner.query(
+      `GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO tenantkit_app;`,
+    );
+    await queryRunner.query(
+      `GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO tenantkit_app;`,
+    );
 
     // We also alter default privileges for tables created in the future:
     try {
@@ -60,17 +66,25 @@ export class EnableRls1735774200000 implements MigrationInterface {
       await queryRunner.query(`
         ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO tenantkit_app;
       `);
-    } catch (e) {
+    } catch {
       // Ignore if not supported in current environment
     }
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP POLICY IF EXISTS tenants_isolation_policy ON tenants;`);
-    await queryRunner.query(`DROP POLICY IF EXISTS users_access_policy ON users;`);
-    await queryRunner.query(`DROP POLICY IF EXISTS memberships_tenant_isolation_policy ON memberships;`);
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS tenants_isolation_policy ON tenants;`,
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS users_access_policy ON users;`,
+    );
+    await queryRunner.query(
+      `DROP POLICY IF EXISTS memberships_tenant_isolation_policy ON memberships;`,
+    );
     await queryRunner.query(`ALTER TABLE tenants DISABLE ROW LEVEL SECURITY;`);
     await queryRunner.query(`ALTER TABLE users DISABLE ROW LEVEL SECURITY;`);
-    await queryRunner.query(`ALTER TABLE memberships DISABLE ROW LEVEL SECURITY;`);
+    await queryRunner.query(
+      `ALTER TABLE memberships DISABLE ROW LEVEL SECURITY;`,
+    );
   }
 }

@@ -15,15 +15,19 @@ export class TenantMiddleware implements NestMiddleware {
   async use(req: Request, res: Response, next: NextFunction) {
     try {
       const host = req.headers.host?.toLowerCase().split(':')[0] || '';
-      
+
       const tenant = await this.resolveTenant(host);
       if (!tenant) {
         throw new NotFoundException(`Tenant not found for host: ${host}`);
       }
 
       tenantStorage.run(
-        { tenantId: tenant.id, tenantSlug: tenant.slug, tenantName: tenant.name },
-        () => next()
+        {
+          tenantId: tenant.id,
+          tenantSlug: tenant.slug,
+          tenantName: tenant.name,
+        },
+        () => next(),
       );
     } catch (error) {
       next(error);
@@ -32,8 +36,8 @@ export class TenantMiddleware implements NestMiddleware {
 
   private async resolveTenant(host: string): Promise<Tenant | null> {
     // 1. Custom domain lookup
-    const byDomain = await this.tenantRepo.findOne({ 
-      where: { customDomain: host } 
+    const byDomain = await this.tenantRepo.findOne({
+      where: { customDomain: host },
     });
     if (byDomain) return byDomain;
 

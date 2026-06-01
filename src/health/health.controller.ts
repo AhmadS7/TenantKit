@@ -6,6 +6,7 @@ import {
 } from '@nestjs/terminus';
 import Redis from 'ioredis';
 import { BillingService } from '../billing/billing.service';
+import { Public } from '../common/public.decorator';
 
 // terminus 11 no longer re-exports HealthIndicatorResult from the package root,
 // so we mirror its shape: a keyed entry whose status is the literal up or down.
@@ -14,6 +15,7 @@ type IndicatorResult = Record<
   { status: 'up' | 'down' } & Record<string, unknown>
 >;
 
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(

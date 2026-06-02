@@ -5,6 +5,7 @@ import {
   HealthCheck,
 } from '@nestjs/terminus';
 import Redis from 'ioredis';
+import { SkipThrottle } from '@nestjs/throttler';
 import { BillingService } from '../billing/billing.service';
 import { Public } from '../common/public.decorator';
 
@@ -16,6 +17,7 @@ type IndicatorResult = Record<
 >;
 
 @Public()
+@SkipThrottle()
 @Controller('health')
 export class HealthController {
   constructor(

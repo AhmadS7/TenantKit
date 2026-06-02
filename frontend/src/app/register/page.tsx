@@ -1,58 +1,84 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
-import { Shield, Mail, Lock, Server, ArrowRight, AlertCircle, Building } from 'lucide-react';
+import {
+  Shield,
+  Mail,
+  Lock,
+  Server,
+  ArrowRight,
+  AlertCircle,
+  Building,
+} from 'lucide-react';
+
+const registerSchema = z.object({
+  tenantName: z.string().min(1, 'Company / organization name is required.'),
+  tenantSlug: z
+    .string()
+    .min(3, 'Subdomain must be at least 3 characters.')
+    .regex(
+      /^[a-z0-9-]+$/,
+      'Subdomain must be lowercase letters, numbers, and hyphens.',
+    ),
+  email: z.string().email('Please enter a valid email address.'),
+  password: z.string().min(8, 'Password must be at least 8 characters.'),
+});
+type RegisterValues = z.infer<typeof registerSchema>;
 
 export default function Register() {
-  const { register, isLoading, error: authError } = useAuthStore();
+  const { register: registerUser } = useAuthStore();
 
-  // Form states
-  const [tenantName, setTenantName] = useState('');
-  const [tenantSlug, setTenantSlug] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      tenantName: '',
+      tenantSlug: '',
+      email: '',
+      password: '',
+    },
+  });
 
-  const handleSlugChange = (val: string) => {
-    // Only lowercase alphanumeric and hyphens
-    const clean = val.toLowerCase().replace(/[^a-z0-9-]/g, '');
-    setTenantSlug(clean);
-  };
+  const slugField = register('tenantSlug');
 
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!tenantName || !tenantSlug || !email || !password) {
-      setError('Please fill in all fields.');
-      return;
-    }
-
-    if (tenantSlug.length < 3) {
-      setError('Subdomain slug must be at least 3 characters.');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-
+  const onSubmit = async ({
+    email,
+    password,
+    tenantName,
+    tenantSlug,
+  }: RegisterValues) => {
     try {
-      await register(email, password, tenantName, tenantSlug);
-      
+      await registerUser(email, password, tenantName, tenantSlug);
+      toast.success('Workspace created. Redirecting to sign in...');
+
       // On success, redirect the browser to the new tenant login page
       if (typeof window !== 'undefined') {
         const port = window.location.port ? `:${window.location.port}` : '';
-        const domain = window.location.hostname.replace('www.', '').split('.').slice(-2).join('.');
-        
-        // Redirect to the tenant-specific domain with email prefilled
-        window.location.href = `http://${tenantSlug}.${domain}${port}/login?email=${encodeURIComponent(email)}`;
+        const domain = window.location.hostname
+          .replace('www.', '')
+          .split('.')
+          .slice(-2)
+          .join('.');
+
+        window.location.assign(
+          `http://${tenantSlug}.${domain}${port}/login?email=${encodeURIComponent(
+            email,
+          )}`,
+        );
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed.');
+      const message =
+        err instanceof Error ? err.message : 'Registration failed.';
+      toast.error(message);
     }
   };
 
@@ -72,20 +98,18 @@ export default function Register() {
               TENANTKIT
             </span>
           </Link>
-          <h2 className="text-xl text-slate-400">Create your secure workspace</h2>
+          <h2 className="text-xl text-slate-400">
+            Create your secure workspace
+          </h2>
         </div>
 
         {/* Card */}
         <div className="glass-panel p-8 rounded-2xl">
-          {/* Show Errors */}
-          {(error || authError) && (
-            <div className="flex items-start space-x-2 bg-red-500/10 border border-red-500/20 p-4 rounded-xl text-sm text-red-400 mb-6">
-              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-              <span>{error || authError}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleRegisterSubmit} className="space-y-5">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-5"
+            noValidate
+          >
             {/* Step 1: Tenant Details */}
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
@@ -95,13 +119,17 @@ export default function Register() {
                 <Building className="w-5 h-5 text-slate-500 mr-3" />
                 <input
                   type="text"
-                  value={tenantName}
-                  onChange={(e) => setTenantName(e.target.value)}
+                  {...register('tenantName')}
                   placeholder="Acme Corporation"
                   className="bg-transparent border-none text-white focus:outline-none w-full text-sm placeholder:text-slate-600"
-                  required
                 />
               </div>
+              {errors.tenantName && (
+                <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {errors.tenantName.message}
+                </p>
+              )}
             </div>
 
             <div>
@@ -112,17 +140,31 @@ export default function Register() {
                 <Server className="w-5 h-5 text-slate-500 mr-3" />
                 <input
                   type="text"
-                  value={tenantSlug}
-                  onChange={(e) => handleSlugChange(e.target.value)}
+                  {...slugField}
+                  onChange={(e) => {
+                    // Keep the visible value constrained to a valid slug.
+                    e.target.value = e.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9-]/g, '');
+                    void slugField.onChange(e);
+                  }}
                   placeholder="acme"
                   className="bg-transparent border-none text-white focus:outline-none w-full text-sm placeholder:text-slate-600"
-                  required
                 />
-                <span className="text-sm font-semibold text-slate-500">.tenantkit.app</span>
+                <span className="text-sm font-semibold text-slate-500">
+                  .tenantkit.app
+                </span>
               </div>
-              <p className="text-[10px] text-slate-500 mt-1">
-                Subdomain must be lowercase, alphanumeric, and hyphens.
-              </p>
+              {errors.tenantSlug ? (
+                <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {errors.tenantSlug.message}
+                </p>
+              ) : (
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Subdomain must be lowercase, alphanumeric, and hyphens.
+                </p>
+              )}
             </div>
 
             {/* Step 2: User Account */}
@@ -134,13 +176,17 @@ export default function Register() {
                 <Mail className="w-5 h-5 text-slate-500 mr-3" />
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  {...register('email')}
                   placeholder="admin@acme.com"
                   className="bg-transparent border-none text-white focus:outline-none w-full text-sm placeholder:text-slate-600"
-                  required
                 />
               </div>
+              {errors.email && (
+                <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
             <div>
@@ -151,21 +197,25 @@ export default function Register() {
                 <Lock className="w-5 h-5 text-slate-500 mr-3" />
                 <input
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min. 6 characters"
+                  {...register('password')}
+                  placeholder="Min. 8 characters"
                   className="bg-transparent border-none text-white focus:outline-none w-full text-sm placeholder:text-slate-600"
-                  required
                 />
               </div>
+              {errors.password && (
+                <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitting}
               className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-indigo-500/20 transition-all-300 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? (
+              {isSubmitting ? (
                 <span>Provisioning Workspace...</span>
               ) : (
                 <>
@@ -179,7 +229,10 @@ export default function Register() {
           {/* Links */}
           <div className="mt-8 text-center text-sm text-slate-500">
             Already have a workspace?{' '}
-            <Link href="/login" className="text-indigo-400 hover:text-indigo-300 font-semibold">
+            <Link
+              href="/login"
+              className="text-indigo-400 hover:text-indigo-300 font-semibold"
+            >
               Sign In
             </Link>
           </div>

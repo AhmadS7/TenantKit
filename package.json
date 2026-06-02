@@ -20,6 +20,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json --runInBand"
   },
   "dependencies": {
+    "@nest-lab/throttler-storage-redis": "^1.2.0",
+    "@nestjs/bullmq": "^11.0.4",
     "@nestjs/cache-manager": "^3.1.2",
     "@nestjs/common": "^11.1.24",
     "@nestjs/config": "^4.0.4",
@@ -32,12 +34,15 @@
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "^11.0.1",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^5.77.7",
     "cache-manager": "^7.2.8",
     "cacheable": "^2.3.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "helmet": "^8.2.0",
     "ioredis": "^5.11.0",
+    "joi": "^18.2.1",
+    "nodemailer": "^8.0.10",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
@@ -57,6 +62,7 @@
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.9.1",
+    "@types/nodemailer": "^8.0.0",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/supertest": "^7.2.0",
@@ -84,6 +90,9 @@
     ],
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
+    "setupFiles": [
+      "<rootDir>/../test/setup-env.ts"
+    ],
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },

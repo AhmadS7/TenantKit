@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -8,31 +9,43 @@ import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
+  const configService = app.get(ConfigService);
 
   // Enable Helmet for secure HTTP headers (with loose content policy for Swagger dev UI)
   app.use(
     helmet({
       contentSecurityPolicy:
-        process.env.NODE_ENV === 'production' ? undefined : false,
+        configService.get<string>('NODE_ENV') === 'production'
+          ? undefined
+          : false,
     }),
   );
 
-  // Enable dynamic CORS matching subdomains and credentials
+  // CORS allowlist. The first-party localhost / *.tenantkit.app subdomains are
+  // always permitted; any additional origins (e.g. tenant custom domains) must
+  // be listed explicitly in the CORS_ORIGINS env var (comma-separated).
+  const firstPartyOrigin =
+    /^https?:\/\/(localhost|.*\.localhost|.*\.tenantkit\.app)(:\d+)?$/;
+  const allowedOrigins = (configService.get<string>('CORS_ORIGINS') || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
     origin: (
       origin: string | undefined,
       callback: (err: Error | null, allow?: boolean) => void,
     ) => {
-      if (
-        !origin ||
-        /https?:\/\/(localhost|.*\.localhost|.*\.tenantkit\.app)(:\d+)?$/.test(
-          origin,
-        )
-      ) {
+      // Requests without an Origin header (curl, server-to-server, same-origin).
+      if (!origin) {
         callback(null, true);
-      } else {
-        callback(null, true); // Allow custom client domains as well
+        return;
       }
+      if (firstPartyOrigin.test(origin) || allowedOrigins.includes(origin)) {
+        callback(null, true);
+        return;
+      }
+      callback(new Error(`Origin ${origin} is not allowed by CORS`));
     },
     credentials: true,
   });

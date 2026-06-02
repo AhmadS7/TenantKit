@@ -41,7 +41,7 @@ describe('AuthController (e2e)', () => {
   beforeEach(async () => {
     // Clear test tables before each test case
     await dataSource.query(
-      'TRUNCATE TABLE refresh_tokens, memberships, users, tenants CASCADE;',
+      'TRUNCATE TABLE password_reset_tokens, refresh_tokens, memberships, users, tenants CASCADE;',
     );
   });
 
@@ -213,8 +213,9 @@ describe('AuthController (e2e)', () => {
         .expect(201);
     });
 
-    it('should generate a reset token and successfully update password', async () => {
-      // 1. Request password reset
+    it('should issue a single-use DB-backed reset token and update the password', async () => {
+      // 1. Request password reset. Outside production the raw token is echoed
+      //    back so the e2e flow can exercise the reset without reading email.
       const reqRes = await request(app.getHttpServer())
         .post('/v1/auth/request-password-reset')
         .send({ email: 'recover@tenantkit.app' })
@@ -223,6 +224,13 @@ describe('AuthController (e2e)', () => {
       const reqBody = reqRes.body as AuthResponseBody;
       expect(reqBody.resetToken).toBeDefined();
       const resetToken = reqBody.resetToken;
+
+      // The token is persisted (hashed) — exactly one outstanding row.
+      const rows = await dataSource.query<Array<{ used_at: Date | null }>>(
+        'SELECT used_at FROM password_reset_tokens;',
+      );
+      expect(rows).toHaveLength(1);
+      expect(rows[0].used_at).toBeNull();
 
       // 2. Perform reset password
       await request(app.getHttpServer())
@@ -233,7 +241,16 @@ describe('AuthController (e2e)', () => {
         })
         .expect(200);
 
-      // 3. Verify old password no longer logs in
+      // 3. Reusing the same token must fail (single use)
+      await request(app.getHttpServer())
+        .post('/v1/auth/reset-password')
+        .send({
+          token: resetToken,
+          password: 'anothernewpassword',
+        })
+        .expect(401);
+
+      // 4. Verify old password no longer logs in
       await request(app.getHttpServer())
         .post('/v1/auth/login')
         .send({
@@ -242,7 +259,7 @@ describe('AuthController (e2e)', () => {
         })
         .expect(401);
 
-      // 4. Verify new password successfully logs in
+      // 5. Verify new password successfully logs in
       const newLoginRes = await request(app.getHttpServer())
         .post('/v1/auth/login')
         .send({
@@ -252,6 +269,23 @@ describe('AuthController (e2e)', () => {
         .expect(200);
 
       expect((newLoginRes.body as AuthResponseBody).accessToken).toBeDefined();
+    });
+
+    it('should not reveal whether an email is registered', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/v1/auth/request-password-reset')
+        .send({ email: 'nobody@tenantkit.app' })
+        .expect(200);
+
+      // Unknown email: same shape, no token, and no row persisted.
+      const body = res.body as AuthResponseBody & { success?: boolean };
+      expect(body.success).toBe(true);
+      expect(body.resetToken).toBeUndefined();
+
+      const rows = await dataSource.query<unknown[]>(
+        'SELECT id FROM password_reset_tokens;',
+      );
+      expect(rows).toHaveLength(0);
     });
   });
 });

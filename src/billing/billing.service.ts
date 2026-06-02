@@ -141,6 +141,33 @@ export class BillingService {
     }
   }
 
+  /** Returns the plan tier of the given tenant (RLS-scoped read). */
+  async getTenantPlan(tenantId: string): Promise<string> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new BadRequestException('Tenant not found');
+    }
+    return tenant.planTier;
+  }
+
+  /**
+   * Stub analytics summary for a tenant. Real metrics would be aggregated here;
+   * access is gated by FeatureGuard via @RequireFeature(AdvancedAnalytics).
+   */
+  async getAnalyticsSummary(
+    tenantId: string,
+  ): Promise<{ tenantId: string; plan: string; generatedAt: string }> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new BadRequestException('Tenant not found');
+    }
+    return {
+      tenantId: tenant.id,
+      plan: tenant.planTier,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
   async handleWebhook(rawBody: string, signature: string): Promise<void> {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 

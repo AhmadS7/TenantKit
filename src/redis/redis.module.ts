@@ -6,6 +6,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
+import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
 @Global()
@@ -19,10 +20,11 @@ import Redis from 'ioredis';
   providers: [
     {
       provide: 'REDIS_CLIENT',
-      useFactory: () => {
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
         const logger = new Logger('RedisClient');
-        const host = process.env.REDIS_HOST || 'localhost';
-        const port = parseInt(process.env.REDIS_PORT || '6379', 10);
+        const host = config.get<string>('REDIS_HOST', 'localhost');
+        const port = config.get<number>('REDIS_PORT', 6379);
 
         // Setup lazyConnect and timeout settings to allow local tests to run without active Redis instance
         const client = new Redis({

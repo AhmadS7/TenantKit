@@ -282,9 +282,9 @@ MIT — use it for personal projects, client work, or commercial products. Attri
 
 ## 👤 About the Author
 
-**Ahmad Shah** built TenantKit to solve a recurring problem: every SaaS project starts with the same months of boilerplate for auth, billing, and tenancy.
+**Ahmad Shah and Kazi Efazul Karim** built TenantKit to solve a recurring problem: every SaaS project starts with the same months of boilerplate for auth, billing, and tenancy.
 
-> *"I built TenantKit because I was tired of rebuilding auth, billing, and tenancy for every client project."* — **Ahmad Shah**
+> *"We built TenantKit because I was tired of rebuilding auth, billing, and tenancy for every client project."* — **Ahmad Shah**
 
 ---
 

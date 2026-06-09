@@ -54,16 +54,34 @@
   },
   "hooks": {
     "PreToolUse": [
-      { "matcher": "Write|Edit|MultiEdit", "hooks": [".claude/hooks/pre-tool-use.sh"] }
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/pre-tool-use.sh" }
+        ]
+      }
     ],
     "PostToolUse": [
-      { "matcher": "Edit|Write|MultiEdit", "hooks": [".claude/hooks/post-tool-use.sh"] }
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/post-tool-use.sh" }
+        ]
+      }
     ],
     "UserPromptSubmit": [
-      { "hooks": [".claude/hooks/user-prompt-submit.sh"] }
+      {
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/user-prompt-submit.sh" }
+        ]
+      }
     ],
     "Stop": [
-      { "hooks": [".claude/hooks/stop.sh"] }
+      {
+        "hooks": [
+          { "type": "command", "command": ".claude/hooks/stop.sh" }
+        ]
+      }
     ]
   },
   "env": {

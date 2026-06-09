@@ -162,3 +162,9 @@ temp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Claude Code local config (per-machine)
+.claude/settings.local.json
+.claude/hooks/.log
+.claude/hooks/.log.*
+.claude/worktrees/

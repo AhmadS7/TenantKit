@@ -1,0 +1,6 @@
+.claude/hooks/** linguist-vendored
+.claude/agents/** linguist-vendored
+.claude/skills/** linguist-vendored
+.claude/rules/** linguist-vendored
+.claude/CLAUDE.md linguist-documentation
+.claude/settings.json linguist-vendored

@@ -28,6 +28,10 @@ CREATE POLICY memberships_tenant_isolation_policy ON memberships
 
 -- Create a role for the application that does NOT have SUPERUSER or BYPASSRLS
 -- Note: This should be run by a superuser, then the app should connect as this role
+-- The LOGIN password is sourced from the TENANT_DB_APP_PASSWORD env var at runtime
+-- by the paired .ts migration (DDL cannot read env vars directly). The literal
+-- below is the dev/test fallback only; the .ts file re-runs ALTER ROLE ... PASSWORD
+-- with the real value when it executes, so this static file is for reference/audit.
 DO $$
 BEGIN
     -- Create the application role if it doesn't exist

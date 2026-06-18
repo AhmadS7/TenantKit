@@ -72,15 +72,18 @@ async function bootstrap() {
     defaultVersion: '1',
   });
 
-  // Enable Swagger/OpenAPI docs
-  const config = new DocumentBuilder()
-    .setTitle('TenantKit API')
-    .setDescription('Multi-tenant SaaS API endpoints')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  // Enable Swagger/OpenAPI docs only outside production to avoid exposing the
+  // API surface (route/DTO shapes) on a live deployment.
+  if (configService.get<string>('NODE_ENV') !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('TenantKit API')
+      .setDescription('Multi-tenant SaaS API endpoints')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   // Enable graceful shutdown hooks
   app.enableShutdownHooks();

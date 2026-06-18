@@ -34,11 +34,10 @@ export class BillingController {
   @UseGuards(JwtAuthGuard)
   async createCheckoutSession(
     @Body() dto: CreateCheckoutDto,
-    @Request() req: ExpressRequest,
+    @Request() _req: ExpressRequest,
   ) {
     const tenantId = this.requireTenantId();
-    const host = req.headers.host || 'localhost';
-    return this.billingService.createCheckoutSession(tenantId, dto.plan, host);
+    return this.billingService.createCheckoutSession(tenantId, dto.plan);
   }
 
   /** Lists the features unlocked by the current tenant's plan. */

@@ -15,6 +15,7 @@ import { LoginDto } from './dto/login.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle, seconds } from '@nestjs/throttler';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -42,16 +43,18 @@ export class AuthController {
     return this.authService.login(req.user);
   }
 
+  @Throttle({ default: { limit: 30, ttl: seconds(60) } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Body('refreshToken') refreshToken: string) {
-    return this.authService.refresh(refreshToken);
+  async refresh(@Body() dto: RefreshTokenDto) {
+    return this.authService.refresh(dto.refreshToken);
   }
 
+  @Throttle({ default: { limit: 30, ttl: seconds(60) } })
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Body('refreshToken') refreshToken: string) {
-    await this.authService.logout(refreshToken);
+  async logout(@Body() dto: RefreshTokenDto) {
+    await this.authService.logout(dto.refreshToken);
     return { success: true };
   }
 

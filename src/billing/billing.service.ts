@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import { Tenant } from '../tenancy/tenant.entity';
 import { getTenantManager } from '../tenancy/tenant-context';
 import Stripe from 'stripe';
@@ -31,6 +32,7 @@ export class BillingService {
   constructor(
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    private readonly config: ConfigService,
   ) {
     const apiKey = process.env.STRIPE_API_KEY;
     if (apiKey && apiKey !== 'change_me') {
@@ -61,7 +63,6 @@ export class BillingService {
   async createCheckoutSession(
     tenantId: string,
     plan: string,
-    host: string,
   ): Promise<{ url: string }> {
     const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
     if (!tenant) {
@@ -73,10 +74,16 @@ export class BillingService {
       throw new BadRequestException('Invalid plan selection');
     }
 
-    // Dynamic redirect URLs based on host
-    const port = host.includes('localhost') ? ':3001' : '';
-    const successUrl = `http://${host}${port}/dashboard?checkout_success=true`;
-    const cancelUrl = `http://${host}${port}/billing?checkout_cancel=true`;
+    // Redirect URLs are derived from the validated FRONTEND_URL config (a Joi
+    // URI) rather than the request Host header, which is user-controllable and
+    // could otherwise be spoofed into an open redirect / phishing URL.
+    const frontendUrl = this.config.get<string>('FRONTEND_URL');
+    if (!frontendUrl) {
+      throw new BadRequestException('Frontend URL is not configured');
+    }
+    const base = frontendUrl.replace(/\/$/, '');
+    const successUrl = `${base}/dashboard?checkout_success=true`;
+    const cancelUrl = `${base}/billing?checkout_cancel=true`;
 
     // 1. Mock Sandbox Mode
     if (!this.stripe) {
@@ -135,9 +142,16 @@ export class BillingService {
 
       return { url: session.url || successUrl };
     } catch (err) {
+      // Log the full SDK error internally; return only a generic message so
+      // Stripe API/transport details are not exposed to the client.
       const message = err instanceof Error ? err.message : String(err);
-      this.logger.error('Stripe Checkout Error:', err);
-      throw new BadRequestException(`Stripe error: ${message}`);
+      this.logger.error(
+        `Stripe Checkout error for tenant ${tenant.id}: ${message}`,
+        err instanceof Error ? err.stack : undefined,
+      );
+      throw new BadRequestException(
+        'Unable to create checkout session. Please try again.',
+      );
     }
   }
 
@@ -187,11 +201,11 @@ export class BillingService {
         webhookSecret,
       );
     } catch (err) {
+      // Log the verification failure detail internally; return a generic
+      // message so signature/error specifics are not disclosed to callers.
       const message = err instanceof Error ? err.message : String(err);
       this.logger.error(`Webhook signature verification failed: ${message}`);
-      throw new ForbiddenException(
-        `Webhook signature verification failed: ${message}`,
-      );
+      throw new ForbiddenException('Webhook signature verification failed');
     }
 
     this.logger.log(`Received Stripe Webhook event: ${event.type}`);

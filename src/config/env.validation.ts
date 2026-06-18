@@ -43,11 +43,29 @@ export const envValidationSchema = Joi.object({
   // CORS — comma-separated list of additional allowed origins (B4).
   CORS_ORIGINS: Joi.string().allow('').optional(),
 
-  // Stripe — optional. Absent/placeholder => Mock Sandbox Mode.
-  STRIPE_API_KEY: Joi.string().optional(),
-  STRIPE_WEBHOOK_SECRET: Joi.string().optional(),
-  STRIPE_PRO_PRICE_ID: Joi.string().optional(),
-  STRIPE_ENT_PRICE_ID: Joi.string().optional(),
+  // Stripe — optional in dev (absent/placeholder => Mock Sandbox Mode), but
+  // REQUIRED in production so a misconfigured prod deploy can never silently
+  // run in Mock Sandbox (which grants paid plans without payment).
+  STRIPE_API_KEY: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
+  STRIPE_WEBHOOK_SECRET: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
+  STRIPE_PRO_PRICE_ID: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
+  STRIPE_ENT_PRICE_ID: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
 
   // SMTP — optional. Absent SMTP_HOST => dev mail mode (logs emails).
   SMTP_HOST: Joi.string().optional(),

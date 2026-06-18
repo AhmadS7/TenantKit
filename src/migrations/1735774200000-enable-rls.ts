@@ -34,12 +34,21 @@ export class EnableRls1735774200000 implements MigrationInterface {
           USING (tenant_id = current_setting('app.current_tenant')::uuid);
     `);
 
-    // Create application role
+    // Create application role. The LOGIN password is taken from the
+    // TENANT_DB_APP_PASSWORD env var (required in production by Joi — see
+    // config/env.validation.ts) so the RLS role is never left on a known
+    // placeholder. The value is escaped (single quotes doubled) because
+    // Postgres DDL does not accept parameters for passwords.
+    const tenantRolePassword = (
+      process.env.TENANT_DB_APP_PASSWORD || 'change_this_password'
+    ).replace(/'/g, "''");
     await queryRunner.query(`
       DO $$
       BEGIN
           IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'tenantkit_app') THEN
-              CREATE ROLE tenantkit_app LOGIN PASSWORD 'change_this_password';
+              CREATE ROLE tenantkit_app LOGIN PASSWORD '${tenantRolePassword}';
+          ELSE
+              ALTER ROLE tenantkit_app LOGIN PASSWORD '${tenantRolePassword}';
           END IF;
 
           ALTER ROLE tenantkit_app NOSUPERUSER;

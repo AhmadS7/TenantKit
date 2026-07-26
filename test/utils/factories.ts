@@ -1,5 +1,8 @@
 import { User } from '../../src/users/user.entity';
 
+export const DEFAULT_MOCK_PASSWORD_HASH =
+  '$2a$10$abcdefghijklmnopqrstuvwxyz123456';
+
 export class UserFactory {
   private static idCounter = 1;
 
@@ -9,8 +12,7 @@ export class UserFactory {
       overrides.id ??
       `11111111-2222-3333-4444-${String(UserFactory.idCounter++).padStart(12, '0')}`;
     user.email = overrides.email ?? `user${Date.now()}@example.com`;
-    user.passwordHash =
-      overrides.passwordHash ?? '$2a$10$abcdefghijklmnopqrstuvwxyz123456';
+    user.passwordHash = overrides.passwordHash ?? DEFAULT_MOCK_PASSWORD_HASH;
     user.refreshTokenHash = overrides.refreshTokenHash ?? null;
     user.emailVerified = overrides.emailVerified ?? true;
     user.lastLoginAt = overrides.lastLoginAt ?? new Date();

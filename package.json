@@ -1,23 +1,30 @@
 {
   "name": "tenantkit",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "Production-ready, AI-First Multi-Tenant SaaS Boilerplate",
+  "author": "TenantKit Engineering",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "dev": "nest start --watch",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "quality": "node scripts/quality-metrics.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:unit": "jest --testPathIgnorePatterns=test/integration",
+    "test:integration": "jest --testPathPattern=test/integration",
     "test:e2e": "jest --config ./test/jest-e2e.json --runInBand",
+    "test:bdd": "cucumber-js",
+    "test:mutation": "stryker run",
+    "coverage": "jest --coverage",
+    "ci": "pnpm run typecheck && pnpm run lint && pnpm run quality && pnpm run test && pnpm run test:bdd && pnpm run test:e2e && pnpm run build",
     "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
@@ -54,11 +61,14 @@
     "typeorm": "^1.0.0"
   },
   "devDependencies": {
+    "@cucumber/cucumber": "^11.2.0",
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^10.0.1",
     "@nestjs/cli": "^11.0.21",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^11.1.24",
+    "@stryker-mutator/core": "^8.7.1",
+    "@stryker-mutator/jest-runner": "^8.7.1",
     "@types/bcryptjs": "^3.0.0",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
@@ -72,6 +82,8 @@
     "eslint-plugin-prettier": "^5.5.6",
     "globals": "^17.6.0",
     "jest": "^30.4.2",
+    "knip": "^5.45.0",
+    "madge": "^8.0.0",
     "prettier": "^3.8.3",
     "source-map-support": "^0.5.21",
     "sqlite3": "^6.0.1",
@@ -98,9 +110,24 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!**/*.module.ts",
+      "!main.ts"
     ],
     "coverageDirectory": "../coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 80,
+        "branches": 80,
+        "functions": 80,
+        "lines": 80
+      }
+    },
     "testEnvironment": "node"
   },
   "pnpm": {

@@ -1,4 +1,4 @@
-name: TenantKit CI/CD Pipeline
+name: TenantKit Quality & CI/CD Pipeline
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  backend-ci:
-    name: Backend CI
+  quality-gate-pipeline:
+    name: Monorepo Automated Quality Gates
     runs-on: ubuntu-latest
 
     services:
@@ -41,56 +41,37 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Install Backend Dependencies
+      - name: 1. Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run Linter
+      - name: 2. Type Check
+        run: pnpm run typecheck
+
+      - name: 3. Lint Codebase
         run: pnpm run lint
 
-      - name: Run Database Seeding Utility
-        env:
-          DB_PASSWORD: postgres
-        run: node test-db-setup.js
+      - name: 4. Engineering Quality Metrics & Static Analysis
+        run: pnpm run quality
 
-      - name: Run Backend Unit & Integration Tests
+      - name: 5. Backend Unit & Integration Tests
         run: pnpm test
 
-      - name: Run Backend E2E Tests
+      - name: 6. BDD Feature Tests
+        run: pnpm run test:bdd
+
+      - name: 7. Backend E2E Tests
         env:
           DB_PASSWORD: postgres
         run: pnpm run test:e2e
 
-      - name: Build Production Bundle
-        run: pnpm run build
-
-  frontend-ci:
-    name: Frontend CI
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-          cache-dependency-path: './frontend/pnpm-lock.yaml'
-
-      - name: Install Frontend Dependencies
+      - name: 8. Frontend Quality & Component Tests
         working-directory: ./frontend
-        run: pnpm install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run lint
+          pnpm test
 
-      - name: Run Linter
-        working-directory: ./frontend
-        run: pnpm run lint
-
-      - name: Build Next.js Production App
-        working-directory: ./frontend
-        run: pnpm run build
+      - name: 9. Production Build Verification
+        run: |
+          pnpm run build
+          cd frontend && pnpm run build

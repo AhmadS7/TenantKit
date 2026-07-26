@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "pnpm",
+  "reporters": ["html", "clear-text", "progress"],
+  "testRunner": "jest",
+  "coverageAnalysis": "perTest",
+  "mutate": [
+    "src/auth/**/*.service.ts",
+    "src/auth/**/*.guard.ts",
+    "src/common/**/*.ts",
+    "!src/**/*.spec.ts",
+    "!src/**/*.dto.ts",
+    "!src/migrations/*.ts"
+  ],
+  "thresholds": {
+    "high": 80,
+    "low": 60,
+    "break": 60
+  },
+  "jest": {
+    "projectType": "custom",
+    "configFile": "package.json"
+  }
+}

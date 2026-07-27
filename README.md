@@ -1,7 +1,7 @@
 # TenantKit
 
 > **Multi-Tenant SaaS Boilerplate**
-> Built by **Ahmad Shah** — a secure, scalable starting point so you don't rebuild auth, billing, and tenancy from scratch.
+> Built by **Kazi Efazul Karim and Ahmad Shah** — a secure, scalable starting point so you don't rebuild auth, billing, and tenancy from scratch.
 
 ---
 
